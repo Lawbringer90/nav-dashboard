@@ -312,9 +312,9 @@ body {
 }
 
 .categories-sidebar .category-tab.active {
-  background: var(--warm-gradient);
-  color: white;
-  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4);
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 2px rgba(100, 180, 255, 0.6), 0 0 12px rgba(100, 180, 255, 0.4);
 }
 
 .categories-sidebar .category-tab:not(.active):hover {
