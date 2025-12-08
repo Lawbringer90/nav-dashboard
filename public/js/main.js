@@ -1,12 +1,25 @@
-// API 配置 - Workers 地址
-const API_BASE = 'https://nav-dashboard.debbide.workers.dev';  // 替换为你的 Workers 域名
+// 自动从环境检测 API 地址
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8787'  // 本地开发
+    : `https://${window.WORKER_URL || 'nav-dashboard.YOUR_ACCOUNT.workers.dev'}`;  // 生产环境
+
+// 从页面提供的配置获取 API 地址（由部署脚本注入）
+const getApiBase = () => {
+    const configEl = document.getElementById('api-config');
+    if (configEl && configEl.dataset.workerUrl) {
+        return configEl.dataset.workerUrl;
+    }
+    return API_BASE;
+};
+
+const apiUrl = getApiBase();
 
 // ==================== 主要功能 ====================
 
 // 加载分类
 async function loadCategories() {
     try {
-        const response = await fetch(`${API_BASE}/api/categories`);
+        const response = await fetch(`${apiUrl}/api/categories`);
         const data = await response.json();
 
         if (data.success) {
@@ -20,7 +33,7 @@ async function loadCategories() {
 // 加载站点
 async function loadSites(categoryId = 'all', searchTerm = '') {
     try {
-        let url = `${API_BASE}/api/sites`;
+        let url = `${apiUrl}/api/sites`;
         const params = new URLSearchParams();
 
         if (categoryId && categoryId !== 'all') {
@@ -111,7 +124,7 @@ function createSiteCard(site) {
 
     card.innerHTML = `
     <div class="site-logo">
-      <img src="${logo.startsWith('/') ? API_BASE + logo : logo}" alt="${site.name}" onerror="this.src='https://via.placeholder.com/64?text=${encodeURIComponent(site.name.charAt(0))}'">
+      <img src="${logo.startsWith('/') ? apiUrl + logo : logo}" alt="${site.name}" onerror="this.src='https://via.placeholder.com/64?text=${encodeURIComponent(site.name.charAt(0))}'">
     </div>
     <div class="site-info">
       <h3 class="site-name">${site.name}</h3>

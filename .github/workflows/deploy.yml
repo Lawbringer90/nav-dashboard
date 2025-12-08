@@ -60,12 +60,38 @@ jobs:
         continue-on-error: true
 
       - name: 部署 Workers
+        id: deploy-workers
         run: |
           echo "部署 Workers API..."
-          wrangler deploy
+          OUTPUT=$(wrangler deploy 2>&1)
+          echo "$OUTPUT"
+          
+          # 提取 Workers URL
+          WORKER_URL=$(echo "$OUTPUT" | grep -oP 'https://[^\s]+\.workers\.dev' | head -n 1)
+          
+          if [ -z "$WORKER_URL" ]; then
+            # 如果没有找到，使用默认格式
+            WORKER_URL="https://nav-dashboard.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          fi
+          
+          echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
+          echo "✅ Workers 已部署: $WORKER_URL"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: 注入 API 配置到前端
+        run: |
+          echo "注入 Workers URL 到前端..."
+          WORKER_URL="${{ steps.deploy-workers.outputs.worker_url }}"
+          
+          # 在 index.html 添加配置
+          sed -i 's|</head>|<script>window.WORKER_URL = "'"$WORKER_URL"'";</script></head>|' public/index.html
+          
+          # 在 admin.html 添加配置
+          sed -i 's|</head>|<script>window.WORKER_URL = "'"$WORKER_URL"'";</script></head>|' public/admin.html
+          
+          echo "✅ API 地址已注入: $WORKER_URL"
 
       - name: 部署 Pages
         run: |
