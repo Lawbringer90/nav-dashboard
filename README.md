@@ -2,6 +2,8 @@
 
 一个基于卡片式布局的现代化导航站点，采用磨砂玻璃（Glassmorphism）设计风格，部署在 Cloudflare 无服务器平台。
 
+**🔗 在线演示**：https://nav.csee.de5.net
+
 ![导航站截图](screenshot.png)
 
 ## ✨ 特性
