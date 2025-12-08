@@ -1,7 +1,5 @@
-import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
-
 export default {
-    async fetch(request, env, ctx) {
+    async fetch(request, env) {
         const url = new URL(request.url);
         const { pathname } = url;
 
@@ -23,39 +21,61 @@ export default {
                 return await handleAPI(request, env, pathname, corsHeaders);
             }
 
-            // 静态文件托管
-            return await getAssetFromKV(
-                {
-                    request,
-                    waitUntil: ctx.waitUntil.bind(ctx),
-                },
-                {
-                    ASSET_NAMESPACE: env.__STATIC_CONTENT,
-                    ASSET_MANIFEST: __STATIC_CONTENT_MANIFEST,
-                }
-            );
-        } catch (error) {
-            // 如果是 404，返回 index.html（SPA 路由）
-            if (error.status === 404) {
-                try {
-                    return await getAssetFromKV(
-                        {
-                            request: new Request(`${url.origin}/index.html`, request),
-                            waitUntil: ctx.waitUntil.bind(ctx),
-                        },
-                        {
-                            ASSET_NAMESPACE: env.__STATIC_CONTENT,
-                            ASSET_MANIFEST: __STATIC_CONTENT_MANIFEST,
-                        }
-                    );
-                } catch (e) {
+            // 静态文件 - 使用 Workers Sites 自动处理
+            // 使用 env.__STATIC_CONTENT 访问静态资源
+            try {
+                const assetKey = pathname === '/' ? '/index.html' : pathname;
+                const asset = await env.__STATIC_CONTENT.get(assetKey, { type: 'stream' });
+
+                if (!asset) {
+                    // 如果找不到，尝试返回 index.html（用于 SPA）
+                    const indexAsset = await env.__STATIC_CONTENT.get('/index.html', { type: 'stream' });
+                    if (indexAsset) {
+                        return new Response(indexAsset, {
+                            headers: {
+                                'Content-Type': 'text/html;charset=UTF-8',
+                            },
+                        });
+                    }
                     return new Response('Not Found', { status: 404 });
                 }
+
+                // 根据文件扩展名设置 Content-Type
+                const contentType = getContentType(assetKey);
+
+                return new Response(asset, {
+                    headers: {
+                        'Content-Type': contentType,
+                        'Cache-Control': 'public, max-age=3600',
+                    },
+                });
+            } catch (e) {
+                return new Response('Error loading asset: ' + e.message, { status: 500 });
             }
+        } catch (error) {
             return jsonResponse({ success: false, message: error.message }, 500, corsHeaders);
         }
     },
 };
+
+// 获取 Content-Type
+function getContentType(path) {
+    const ext = path.split('.').pop().toLowerCase();
+    const types = {
+        'html': 'text/html;charset=UTF-8',
+        'css': 'text/css;charset=UTF-8',
+        'js': 'application/javascript;charset=UTF-8',
+        'json': 'application/json;charset=UTF-8',
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'svg': 'image/svg+xml',
+        'webp': 'image/webp',
+        'ico': 'image/x-icon',
+    };
+    return types[ext] || 'application/octet-stream';
+}
 
 // ==================== API 处理函数 ====================
 
@@ -297,7 +317,7 @@ async function deleteCategory(id, env, corsHeaders) {
     return jsonResponse({ success: true, message: '分类删除成功' }, 200, corsHeaders);
 }
 
-// ====================文件上传（KV）====================
+// ==================== 文件上传（KV）====================
 
 async function uploadFile(request, env, corsHeaders) {
     try {
