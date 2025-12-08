@@ -57,14 +57,16 @@ jobs:
           echo "✅ 配置文件已更新"
           cat wrangler.toml
 
-      - name: 清理并初始化 D1 数据库
-        run: |
-          echo "清理旧数据并重新初始化..."
-          wrangler d1 execute nav-dashboard-db --file=./reset-data.sql --remote --yes
-          echo "✅ 数据库清理完成"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # 注意：数据库初始化只需执行一次，之后请注释掉这个步骤
+      # 如需重置数据，请手动运行 workflow_dispatch
+      # - name: 清理并初始化 D1 数据库
+      #   run: |
+      #     echo "清理旧数据并重新初始化..."
+      #     wrangler d1 execute nav-dashboard-db --file=./reset-data.sql --remote --yes
+      #     echo "✅ 数据库清理完成"
+      #   env:
+      #     CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: 部署 Workers
         run: |
