@@ -211,19 +211,31 @@ body {
   font-size: 0.9rem;
 }
 
-/* ==================== 响应式设�?==================== */
+/* ==================== 响应式设计 ==================== */
+
+/* 大屏幕平板 */
 @media (max-width: 1200px) {
   .sites-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    margin-left: 0;
   }
 }
 
+/* 平板 */
 @media (max-width: 900px) {
   .sites-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    margin-left: 0;
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+
+  .site-card {
+    width: 100%;
   }
 }
 
+/* 小平板/大手机 */
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -238,27 +250,138 @@ body {
   .logo {
     font-size: 1.5rem;
   }
-}
 
-@media (max-width: 600px) {
   .sites-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .container {
-    padding: var(--spacing-sm);
+    grid-template-columns: repeat(2, 1fr);
+    margin-left: 0;
+    margin-top: 1rem;
+    gap: 0.75rem;
+    padding: 0.5rem;
   }
 
   .site-card {
-    height: 60px;
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+
+  .sidebar {
     padding: var(--spacing-sm);
   }
 
-  .site-logo {
-    width: 40px;
-    height: 40px;
+  .search-box-center {
+    max-width: 90%;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .admin-link {
+    right: 0.5rem;
+    font-size: 1.2rem;
   }
 }
+
+/* 手机 */
+@media (max-width: 600px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .sites-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    padding: 0.25rem;
+    margin-top: 0.5rem;
+  }
+
+  .site-card {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    gap: 0.5rem;
+  }
+
+  .site-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  .site-name {
+    font-size: 0.8rem;
+  }
+
+  .site-desc {
+    display: none;
+  }
+
+  .header-simple {
+    padding: var(--spacing-sm) 0;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .search-box-center {
+    max-width: 85%;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .search-box-center .search-input {
+    font-size: 0.9rem;
+    min-width: 100px;
+  }
+
+  .search-box-center .search-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+
+  .sidebar {
+    min-height: auto;
+    max-height: none;
+    position: static;
+    padding: 0.5rem;
+  }
+
+  .categories-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-start;
+  }
+
+  .categories-sidebar .category-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .categories-sidebar .category-tab span:first-child {
+    font-size: 1rem;
+  }
+}
+
+/* 超小屏手机 */
+@media (max-width: 400px) {
+  .sites-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem;
+  }
+
+  .site-card {
+    padding: 0.5rem;
+  }
+
+  .site-name {
+    font-size: 0.75rem;
+  }
+
+  .site-logo {
+    width: 22px;
+    height: 22px;
+  }
+
+  .categories-sidebar .category-tab {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
+
 
 
 /* ==================== 主布局（侧边栏+内容） ==================== */
