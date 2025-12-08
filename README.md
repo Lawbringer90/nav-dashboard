@@ -17,7 +17,7 @@
 
 - **Cloudflare Workers** - 无服务器后端 API
 - **Cloudflare D1** - SQLite 边缘数据库
-- **Cloudflare R2** - 对象存储（图片）
+- **Cloudflare KV** - 键值存储（图片）
 - **Cloudflare Pages** - 静态站点托管
 - **原生 JavaScript** - 无框架依赖
 
@@ -167,9 +167,11 @@ npm run pages:dev
 
 ### 文件上传
 
-- `POST /api/upload` - 上传图片到 R2
+- `POST /api/upload` - 上传图片到 KV
   - Content-Type: `multipart/form-data`
   - 字段: `image`
+  - 返回: `/api/images/{filename}`
+- `GET /api/images/{filename}` - 获取图片
 
 ## 🔧 配置说明
 
@@ -185,12 +187,9 @@ binding = "DB"
 database_name = "nav-dashboard-db"
 database_id = "YOUR_D1_DATABASE_ID"
 
-[[r2_buckets]]
-binding = "BUCKET"
-bucket_name = "nav-dashboard-images"
-
-[vars]
-R2_PUBLIC_ID = "YOUR_R2_PUBLIC_ID"
+[[kv_namespaces]]
+binding = "KV"
+id = "YOUR_KV_NAMESPACE_ID"
 ```
 
 ## 🎯 使用说明
@@ -279,9 +278,9 @@ npx wrangler d1 execute nav-dashboard-db --file=backup.sql
 
 ### 图片上传失败
 
-- 确认 R2 存储桶已创建
-- 检查 R2_PUBLIC_ID 配置
-- 验证公共访问已启用
+- 确认 KV 命名空间已创建
+- 检查文件大小（限制 2MB）
+- 验证文件类型是否支持
 
 ### API 调用失败
 
