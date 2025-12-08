@@ -6,6 +6,9 @@ DELETE FROM categories;
 DELETE FROM sqlite_sequence WHERE name='sites';
 DELETE FROM sqlite_sequence WHERE name='categories';
 
+-- 重置管理员密码（恢复为默认 admin123）
+DELETE FROM settings WHERE key='admin_password';
+
 -- 插入默认分类
 INSERT INTO categories (name, icon, color, sort_order) VALUES
   ('常用工具', '🛠️', '#a78bfa', 1),
