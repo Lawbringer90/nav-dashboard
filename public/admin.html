@@ -100,8 +100,16 @@
 
         /* 侧边栏和表格表头对齐 */
         .admin-sidebar {
-            margin-top: 4.5rem;
+            margin-top: 5.5rem;
             align-self: flex-start;
+        }
+
+        /* 标题样式 */
+        .panel-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
         }
     </style>
 </head>
@@ -151,7 +159,7 @@
                 <!-- 站点管理面板 -->
                 <div id="sitesPanel" class="content-panel active">
                     <div class="panel-header">
-                        <h2>站点管理</h2>
+                        <h2>🌐 站点管理</h2>
                         <button class="btn-primary" onclick="openSiteModal()">
                             <span>➕</span>
                             <span>添加站点</span>
@@ -187,7 +195,7 @@
                 <!-- 分类管理面板 -->
                 <div id="categoriesPanel" class="content-panel">
                     <div class="panel-header">
-                        <h2>分类管理</h2>
+                        <h2>📁 分类管理</h2>
                         <button class="btn-primary" onclick="openCategoryModal()">
                             <span>➕</span>
                             <span>添加分类</span>
@@ -221,7 +229,7 @@
                 <!-- 背景设置面板 -->
                 <div id="backgroundPanel" class="content-panel">
                     <div class="panel-header">
-                        <h2>背景设置</h2>
+                        <h2>🖼️ 背景设置</h2>
                     </div>
                     <div class="table-container glass-effect" style="padding: 2rem;">
                         <form id="backgroundForm" style="max-width: 600px;">
