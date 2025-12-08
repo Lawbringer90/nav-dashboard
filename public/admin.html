@@ -98,10 +98,19 @@
             background: rgba(255, 255, 255, 0.3) !important;
         }
 
-        /* 侧边栏和内容区齐平 */
+        /* 侧边栏和内容区顶部对齐 */
         .admin-sidebar {
-            margin-top: 2.5rem;
             align-self: flex-start;
+        }
+
+        /* 内容区去掉标题上方间距 */
+        .panel-header {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        .panel-header h2 {
+            margin-top: 0;
         }
     </style>
 </head>
@@ -125,7 +134,7 @@
         <a href="/" class="back-btn">🏠 返回</a>
 
         <!-- 主内容区 -->
-        <main class="admin-main" style="padding-top: 1rem;">
+        <main class="admin-main" style="padding-top: 3rem;">
 
             <!-- 左侧菜单 -->
             <aside class="admin-sidebar glass-effect">
