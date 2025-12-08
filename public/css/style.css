@@ -1,4 +1,4 @@
-/* ==================== 全局样式 ==================== */
+﻿/* ==================== 全局样式 ==================== */
 * {
   margin: 0;
   padding: 0;
@@ -37,8 +37,8 @@
 
 body {
   font-family: 'Segoe UI', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-gradient);
-  background-attachment: fixed;
+  background: linear-gradient(135deg, rgba(224, 195, 252, 0.3) 0%, rgba(142, 197, 252, 0.3) 50%, rgba(184, 240, 245, 0.3) 100%), url('/images/guilin-bg.png') center/cover no-repeat;
+  
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
@@ -100,7 +100,7 @@ body {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-/* ==================== 搜索�?==================== */
+/* ==================== 搜索�?==================== */
 .search-box {
   position: relative;
   flex: 1;
@@ -193,7 +193,7 @@ body {
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* ==================== 站点网格�?列布局�?==================== */
+/* ==================== 站点网格�?列布局�?==================== */
 .main-content {
   margin-bottom: var(--spacing-xl);
 }
@@ -204,7 +204,7 @@ body {
   gap: var(--spacing-sm);
 }
 
-/* ==================== 站点卡片（横向布局，参考NavidRome风格�?==================== */
+/* ==================== 站点卡片（横向布局，参考NavidRome风格�?==================== */
 .site-card {
   border-radius: var(--radius-lg);
   padding: 0.75rem;
@@ -263,7 +263,7 @@ body {
   display: none;
 }
 
-/* ==================== Loading 状�?==================== */
+/* ==================== Loading 状�?==================== */
 .loading {
   grid-column: 1 / -1;
   display: flex;
@@ -289,7 +289,7 @@ body {
   }
 }
 
-/* ==================== 空状�?==================== */
+/* ==================== 空状�?==================== */
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;
@@ -337,7 +337,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* ==================== 响应式设�?==================== */
+/* ==================== 响应式设�?==================== */
 @media (max-width: 1200px) {
   .sites-grid {
     grid-template-columns: repeat(3, 1fr);
