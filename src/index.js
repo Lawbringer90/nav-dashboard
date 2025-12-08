@@ -21,12 +21,29 @@ export default {
                 return await handleAPI(request, env, pathname, corsHeaders);
             }
 
+            // 调试：列出所有可用的静态文件
+            if (pathname === '/debug/assets') {
+                try {
+                    const list = await env.__STATIC_CONTENT.list();
+                    return new Response(JSON.stringify(list, null, 2), {
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                } catch (e) {
+                    return new Response('__STATIC_CONTENT not available: ' + e.message, {
+                        headers: { 'Content-Type': 'text/plain' }
+                    });
+                }
+            }
+
             // 静态文件处理
             return await serveStatic(pathname, env);
 
         } catch (error) {
             console.error('Error:', error);
-            return jsonResponse({ success: false, message: error.message }, 500, corsHeaders);
+            return new Response('Error: ' + error.message + '\nStack: ' + error.stack, {
+                status: 500,
+                headers: { 'Content-Type': 'text/plain' }
+            });
         }
     },
 };
@@ -34,16 +51,24 @@ export default {
 // 提供静态文件
 async function serveStatic(pathname, env) {
     try {
-        // 处理根路径
-        let assetPath = pathname === '/' ? '/index.html' : pathname;
+        // 检查 __STATIC_CONTENT 是否存在
+        if (!env.__STATIC_CONTENT) {
+            return new Response('__STATIC_CONTENT is not available. Please check wrangler.toml configuration.', {
+                status: 500,
+                headers: { 'Content-Type': 'text/plain' }
+            });
+        }
 
-        // 移除开头的斜杠，Workers Sites 不需要
-        const key = assetPath.substring(1);
+        // 处理根路径
+        let assetPath = pathname === '/' ? 'index.html' : pathname.substring(1);
+
+        console.log('Trying to load asset:', assetPath);
 
         // 从 __STATIC_CONTENT 获取文件
-        const content = await env.__STATIC_CONTENT.get(key);
+        const content = await env.__STATIC_CONTENT.get(assetPath);
 
         if (!content) {
+            console.log('Asset not found:', assetPath);
             // 尝试作为 SPA，返回 index.html
             const indexContent = await env.__STATIC_CONTENT.get('index.html');
             if (indexContent) {
@@ -54,7 +79,10 @@ async function serveStatic(pathname, env) {
                     },
                 });
             }
-            return new Response('Not Found', { status: 404 });
+            return new Response(`Not Found: ${assetPath}\n\nTry /debug/assets to see available files`, {
+                status: 404,
+                headers: { 'Content-Type': 'text/plain' }
+            });
         }
 
         // 确定 Content-Type
@@ -70,7 +98,10 @@ async function serveStatic(pathname, env) {
         });
     } catch (error) {
         console.error('Static file error:', error);
-        return new Response('Error: ' + error.message, { status: 500 });
+        return new Response('Error: ' + error.message + '\nStack: ' + error.stack, {
+            status: 500,
+            headers: { 'Content-Type': 'text/plain' }
+        });
     }
 }
 
@@ -101,7 +132,6 @@ function getContentType(path) {
 async function handleAPI(request, env, pathname, corsHeaders) {
     const method = request.method;
 
-    // 站点 API
     if (pathname === '/api/sites') {
         if (method === 'GET') return await getSites(request, env, corsHeaders);
         if (method === 'POST') return await createSite(request, env, corsHeaders);
@@ -114,7 +144,6 @@ async function handleAPI(request, env, pathname, corsHeaders) {
         if (method === 'DELETE') return await deleteSite(id, env, corsHeaders);
     }
 
-    // 分类 API
     if (pathname === '/api/categories') {
         if (method === 'GET') return await getCategories(env, corsHeaders);
         if (method === 'POST') return await createCategory(request, env, corsHeaders);
@@ -126,12 +155,10 @@ async function handleAPI(request, env, pathname, corsHeaders) {
         if (method === 'DELETE') return await deleteCategory(id, env, corsHeaders);
     }
 
-    // 文件上传 API
     if (pathname === '/api/upload' && method === 'POST') {
         return await uploadFile(request, env, corsHeaders);
     }
 
-    // 图片访问 API
     if (pathname.match(/^\/api\/images\/.+$/)) {
         const filename = pathname.split('/').pop();
         return await getImage(filename, env, corsHeaders);
