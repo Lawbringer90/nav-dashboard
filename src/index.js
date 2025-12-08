@@ -1,5 +1,7 @@
+import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
+
 export default {
-    async fetch(request, env) {
+    async fetch(request, env, ctx) {
         const url = new URL(request.url);
         const { pathname } = url;
 
@@ -21,9 +23,35 @@ export default {
                 return await handleAPI(request, env, pathname, corsHeaders);
             }
 
-            // 静态文件托管（由 Pages 处理）
-            return new Response('Not Found', { status: 404 });
+            // 静态文件托管
+            return await getAssetFromKV(
+                {
+                    request,
+                    waitUntil: ctx.waitUntil.bind(ctx),
+                },
+                {
+                    ASSET_NAMESPACE: env.__STATIC_CONTENT,
+                    ASSET_MANIFEST: __STATIC_CONTENT_MANIFEST,
+                }
+            );
         } catch (error) {
+            // 如果是 404，返回 index.html（SPA 路由）
+            if (error.status === 404) {
+                try {
+                    return await getAssetFromKV(
+                        {
+                            request: new Request(`${url.origin}/index.html`, request),
+                            waitUntil: ctx.waitUntil.bind(ctx),
+                        },
+                        {
+                            ASSET_NAMESPACE: env.__STATIC_CONTENT,
+                            ASSET_MANIFEST: __STATIC_CONTENT_MANIFEST,
+                        }
+                    );
+                } catch (e) {
+                    return new Response('Not Found', { status: 404 });
+                }
+            }
             return jsonResponse({ success: false, message: error.message }, 500, corsHeaders);
         }
     },
@@ -181,7 +209,7 @@ async function deleteSite(id, env, corsHeaders) {
     return jsonResponse({ success: true, message: '站点删除成功' }, 200, corsHeaders);
 }
 
-// ================== 分类操作 ====================
+// ==================== 分类操作 ====================
 
 // 获取所有分类
 async function getCategories(env, corsHeaders) {
@@ -269,7 +297,7 @@ async function deleteCategory(id, env, corsHeaders) {
     return jsonResponse({ success: true, message: '分类删除成功' }, 200, corsHeaders);
 }
 
-// ==================== 文件上传（KV）====================
+// ====================文件上传（KV）====================
 
 async function uploadFile(request, env, corsHeaders) {
     try {

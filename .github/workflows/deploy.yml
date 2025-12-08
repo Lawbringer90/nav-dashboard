@@ -12,7 +12,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: 部署到 Cloudflare
+    name: 部署到 Cloudflare Workers
     
     steps:
       - name: Checkout
@@ -22,6 +22,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Install Wrangler
         run: npm install -g wrangler
@@ -34,6 +37,10 @@ jobs:
           name = "nav-dashboard"
           main = "src/index.js"
           compatibility_date = "2024-01-01"
+          
+          # Workers Sites - 静态文件托管
+          [site]
+          bucket = "./public"
           
           # D1 数据库绑定
           [[d1_databases]]
@@ -60,43 +67,9 @@ jobs:
         continue-on-error: true
 
       - name: 部署 Workers
-        id: deploy-workers
         run: |
-          echo "部署 Workers API..."
-          OUTPUT=$(wrangler deploy 2>&1)
-          echo "$OUTPUT"
-          
-          # 提取 Workers URL
-          WORKER_URL=$(echo "$OUTPUT" | grep -oP 'https://[^\s]+\.workers\.dev' | head -n 1)
-          
-          if [ -z "$WORKER_URL" ]; then
-            # 如果没有找到，使用默认格式
-            WORKER_URL="https://nav-dashboard.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
-          fi
-          
-          echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
-          echo "✅ Workers 已部署: $WORKER_URL"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: 注入 API 配置到前端
-        run: |
-          echo "注入 Workers URL 到前端..."
-          WORKER_URL="${{ steps.deploy-workers.outputs.worker_url }}"
-          
-          # 在 index.html 添加配置
-          sed -i 's|</head>|<script>window.WORKER_URL = "'"$WORKER_URL"'";</script></head>|' public/index.html
-          
-          # 在 admin.html 添加配置
-          sed -i 's|</head>|<script>window.WORKER_URL = "'"$WORKER_URL"'";</script></head>|' public/admin.html
-          
-          echo "✅ API 地址已注入: $WORKER_URL"
-
-      - name: 部署 Pages
-        run: |
-          echo "部署 Pages 静态文件..."
-          wrangler pages deploy public --project-name=${{ env.PROJECT_NAME }} --branch=main --commit-dirty=true
+          echo "部署 Workers（包含静态文件和 API）..."
+          wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -106,7 +79,9 @@ jobs:
           echo "✅ 部署完成！"
           echo ""
           echo "🌐 访问地址："
-          echo "  • Workers API: https://nav-dashboard.你的账户.workers.dev"
-          echo "  • Pages 前端: https://${{ env.PROJECT_NAME }}.pages.dev"
+          echo "  • Workers URL: https://nav-dashboard.你的账户.workers.dev"
           echo ""
-          echo "📝 注意: 前端需要配置 Workers API 地址"
+          echo "📝 说明："
+          echo "  - 静态文件和 API 都通过同一个 Workers 提供"
+          echo "  - D1 和 KV 绑定已自动配置"
+          echo "  - 无需额外配置，直接访问即可使用"
