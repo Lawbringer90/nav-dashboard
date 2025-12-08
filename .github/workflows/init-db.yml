@@ -29,6 +29,27 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
+      - name: 配置 wrangler.toml
+        run: |
+          cat > wrangler.toml <<EOF
+          name = "nav-dashboard"
+          main = "src/index.js"
+          compatibility_date = "2024-01-01"
+          
+          [site]
+          bucket = "./public"
+          
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "nav-dashboard-db"
+          database_id = "${{ secrets.D1_DATABASE_ID }}"
+          
+          [[kv_namespaces]]
+          binding = "KV"
+          id = "${{ secrets.KV_NAMESPACE_ID }}"
+          EOF
+          echo "✅ wrangler.toml 配置完成"
+
       - name: 初始化数据库表结构
         run: |
           echo "📦 初始化数据库表结构..."
