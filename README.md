@@ -72,6 +72,8 @@ cd nav-dashboard
 
 访问：`https://nav-dashboard.你的账户.workers.dev`
 
+> **默认管理密码**：`admin123`（首次登录后请及时修改）
+
 ## 📂 项目结构
 
 ```
