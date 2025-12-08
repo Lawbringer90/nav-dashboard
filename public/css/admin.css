@@ -2,90 +2,27 @@
 
 .admin-main {
     display: grid;
-    grid-template-columns: 250px 1fr;
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
-}
 
-/* ==================== 侧边栏 ==================== */
-.admin-sidebar {
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-md);
-    height: fit-content;
-    position: sticky;
-    top: var(--spacing-md);
-}
+    /* ==================== 内容面板 ==================== */
+    .admin-content {
+        min-height: 500px;
+    }
 
-.admin-nav {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
+    .content-panel {
+        display: none;
+    }
 
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: 1rem;
-    cursor: pointer;
-    transition: var(--transition);
-    text-align: left;
-}
+    .content-panel.active {
+        display: block;
+    }
 
-.nav-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
 
-.nav-item.active {
-    background: var(--warm-gradient);
-    box-shadow: 0 4px 12px rgba(255, 154, 86, 0.3);
-}
-
-.nav-item span:first-child {
-    font-size: 1.2rem;
-}
-
-/* ==================== 内容面板 ==================== */
-.admin-content {
-    min-height: 500px;
-}
-
-.content-panel {
-    display: none;
-}
-
-.content-panel.active {
-    display: block;
-}
-
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-}
-
-.panel-header h2 {
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-
-/* ==================== 表格样式 ==================== */
-.table-container {
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-sm);
-    overflow-x: auto;
-    background: transparent !important;
-    backdrop-filter: none !important;
-}
-
-.data-table {
-    width: 100%;
     border-collapse: separate;
     border-spacing: 0 0.6rem;
 }
