@@ -137,15 +137,16 @@ async function handleAPI(request, env, pathname, corsHeaders) {
         if (method === 'POST') return await createSite(request, env, corsHeaders);
     }
 
+    // reorder必须在数字ID路由之前
+    if (pathname === '/api/sites/reorder' && method === 'POST') {
+        return await reorderSites(request, env, corsHeaders);
+    }
+
     if (pathname.match(/^\/api\/sites\/\d+$/)) {
         const id = pathname.split('/').pop();
         if (method === 'GET') return await getSite(id, env, corsHeaders);
         if (method === 'PUT') return await updateSite(id, request, env, corsHeaders);
         if (method === 'DELETE') return await deleteSite(id, env, corsHeaders);
-    }
-
-    if (pathname === '/api/sites/reorder' && method === 'POST') {
-        return await reorderSites(request, env, corsHeaders);
     }
 
     if (pathname === '/api/categories') {
