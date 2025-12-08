@@ -1,242 +1,145 @@
-// 全局状态
-let allSites = [];
-let allCategories = [];
-let currentCategory = 'all';
+// API 配置 - Workers 地址
+const API_BASE = 'https://nav-dashboard.debbide.workers.dev';  // 替换为你的 Workers 域名
 
-// DOM 加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
-    init();
-});
-
-// 初始化函数
-async function init() {
-    await Promise.all([
-        loadCategories(),
-        loadSites()
-    ]);
-
-    // 绑定事件监听器
-    bindEventListeners();
-}
-
-// 绑定事件监听器
-function bindEventListeners() {
-    // 搜索框
-    const searchInput = document.getElementById('searchInput');
-    let searchTimeout;
-
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            handleSearch(e.target.value);
-        }, 300);
-    });
-}
+// ==================== 主要功能 ====================
 
 // 加载分类
 async function loadCategories() {
     try {
-        const response = await fetch('/api/categories');
-        const result = await response.json();
+        const response = await fetch(`${API_BASE}/api/categories`);
+        const data = await response.json();
 
-        if (result.success) {
-            allCategories = result.data;
-            renderCategories();
+        if (data.success) {
+            renderCategories(data.data);
         }
     } catch (error) {
         console.error('加载分类失败:', error);
     }
 }
 
-// 渲染分类标签
-function renderCategories() {
-    const categoriesList = document.getElementById('categoriesList');
+// 加载站点
+async function loadSites(categoryId = 'all', searchTerm = '') {
+    try {
+        let url = `${API_BASE}/api/sites`;
+        const params = new URLSearchParams();
 
-    // 保留"全部"按钮
-    const allButton = categoriesList.querySelector('[data-category="all"]');
-    categoriesList.innerHTML = '';
-    categoriesList.appendChild(allButton);
-
-    // 渲染分类按钮
-    allCategories.forEach(category => {
-        const button = document.createElement('button');
-        button.className = 'category-tab glass-effect';
-        button.dataset.category = category.id;
-        button.textContent = `${category.icon || ''} ${category.name}`;
-
-        if (category.color) {
-            button.style.setProperty('--category-color', category.color);
+        if (categoryId && categoryId !== 'all') {
+            params.append('category', categoryId);
         }
 
-        button.addEventListener('click', () => {
-            handleCategoryChange(category.id);
-        });
+        if (searchTerm) {
+            params.append('search', searchTerm);
+        }
 
-        categoriesList.appendChild(button);
-    });
-}
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
 
-// 处理分类切换
-function handleCategoryChange(categoryId) {
-    currentCategory = categoryId;
+        const response = await fetch(url);
+        const data = await response.json();
 
-    // 更新按钮状态
-    document.querySelectorAll('.category-tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-
-    const activeTab = document.querySelector(`[data-category="${categoryId}"]`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-    }
-
-    // 过滤并渲染站点
-    filterAndRenderSites();
-}
-
-// 加载站点
-async function loadSites() {
-    try {
-        const sitesGrid = document.getElementById('sitesGrid');
-        sitesGrid.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>加载中...</p></div>';
-
-        const response = await fetch('/api/sites');
-        const result = await response.json();
-
-        if (result.success) {
-            allSites = result.data;
-            filterAndRenderSites();
+        if (data.success) {
+            renderSites(data.data);
         }
     } catch (error) {
         console.error('加载站点失败:', error);
-        showError('加载站点失败，请刷新页面重试');
     }
 }
 
-// 过滤并渲染站点
-function filterAndRenderSites(searchTerm = '') {
-    let filteredSites = allSites;
+// 渲染分类
+function renderCategories(categories) {
+    const container = document.getElementById('categoryTabs');
+    container.innerHTML = '';
 
-    // 按分类过滤
-    if (currentCategory !== 'all') {
-        filteredSites = filteredSites.filter(site =>
-            site.category_id === parseInt(currentCategory)
-        );
-    }
+    // 添加"全部"标签
+    const allTab = createCategoryTab('all', '全部', '#ff9a56', true);
+    container.appendChild(allTab);
 
-    // 按搜索词过滤
-    if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filteredSites = filteredSites.filter(site =>
-            site.name.toLowerCase().includes(term) ||
-            (site.description && site.description.toLowerCase().includes(term)) ||
-            site.url.toLowerCase().includes(term)
-        );
-    }
-
-    renderSites(filteredSites);
+    // 添加其他分类
+    categories.forEach(category => {
+        const tab = createCategoryTab(category.id, category.name, category.color, false, category.icon);
+        container.appendChild(tab);
+    });
 }
 
-// 渲染站点卡片
+// 创建分类标签
+function createCategoryTab(id, name, color, active = false, icon = '') {
+    const tab = document.createElement('button');
+    tab.className = 'category-tab' + (active ? ' active' : '');
+    tab.dataset.category = id;
+    tab.style.setProperty('--category-color', color);
+
+    if (icon) {
+        tab.innerHTML = `<span class="category-icon">${icon}</span>${name}`;
+    } else {
+        tab.textContent = name;
+    }
+
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        loadSites(id, document.getElementById('searchInput').value);
+    });
+
+    return tab;
+}
+
+// 渲染站点
 function renderSites(sites) {
-    const sitesGrid = document.getElementById('sitesGrid');
-    const emptyState = document.getElementById('emptyState');
+    const container = document.getElementById('sitesGrid');
+    container.innerHTML = '';
 
     if (sites.length === 0) {
-        sitesGrid.style.display = 'none';
-        emptyState.style.display = 'block';
+        container.innerHTML = '<div class="no-results">暂无站点</div>';
         return;
     }
 
-    sitesGrid.style.display = 'grid';
-    emptyState.style.display = 'none';
-    sitesGrid.innerHTML = '';
-
     sites.forEach(site => {
         const card = createSiteCard(site);
-        sitesGrid.appendChild(card);
+        container.appendChild(card);
     });
 }
 
 // 创建站点卡片
 function createSiteCard(site) {
     const card = document.createElement('a');
-    card.className = 'site-card glass-effect';
     card.href = site.url;
     card.target = '_blank';
-    card.rel = 'noopener noreferrer';
+    card.className = 'site-card';
 
-    // 获取默认 logo
-    const logo = site.logo || getDefaultLogo(site.url);
+    const logo = site.logo || 'https://via.placeholder.com/64?text=' + encodeURIComponent(site.name.charAt(0));
 
     card.innerHTML = `
-    <div class="site-card-header">
-      <img src="${logo}" alt="${site.name}" class="site-logo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><text y=%2232%22 font-size=%2232%22>🌐</text></svg>'">
-      <div class="site-info">
-        <div class="site-name">${escapeHtml(site.name)}</div>
-        <div class="site-url">${getDomain(site.url)}</div>
-      </div>
+    <div class="site-logo">
+      <img src="${logo.startsWith('/') ? API_BASE + logo : logo}" alt="${site.name}" onerror="this.src='https://via.placeholder.com/64?text=${encodeURIComponent(site.name.charAt(0))}'">
     </div>
-    ${site.description ? `<div class="site-description">${escapeHtml(site.description)}</div>` : ''}
-    ${site.category_name ? `<span class="site-category" style="background-color: ${site.category_color || '#ff9a56'}33">${site.category_name}</span>` : ''}
+    <div class="site-info">
+      <h3 class="site-name">${site.name}</h3>
+      <p class="site-desc">${site.description || ''}</p>
+      ${site.category_name ? `<span class="site-category" style="background: ${site.category_color || '#ff9a56'}20; color: ${site.category_color || '#ff9a56'}">${site.category_name}</span>` : ''}
+    </div>
   `;
 
     return card;
 }
 
-// 获取默认 logo（使用 favicon）
-function getDefaultLogo(url) {
-    try {
-        const domain = new URL(url).origin;
-        return `${domain}/favicon.ico`;
-    } catch {
-        return 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><text y=%2232%22 font-size=%2232%22>🌐</text></svg>';
-    }
+// 搜索功能
+function setupSearch() {
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const categoryId = document.querySelector('.category-tab.active')?.dataset.category || 'all';
+            loadSites(categoryId, e.target.value);
+        }, 300);
+    });
 }
 
-// 获取域名
-function getDomain(url) {
-    try {
-        return new URL(url).hostname;
-    } catch {
-        return url;
-    }
-}
-
-// 处理搜索
-async function handleSearch(searchTerm) {
-    if (searchTerm.trim()) {
-        // 使用 API 搜索
-        try {
-            const response = await fetch(`/api/sites?search=${encodeURIComponent(searchTerm)}`);
-            const result = await response.json();
-
-            if (result.success) {
-                renderSites(result.data);
-            }
-        } catch (error) {
-            console.error('搜索失败:', error);
-        }
-    } else {
-        // 清空搜索，重新加载
-        filterAndRenderSites();
-    }
-}
-
-// HTML 转义
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// 显示错误
-function showError(message) {
-    const sitesGrid = document.getElementById('sitesGrid');
-    sitesGrid.innerHTML = `
-    <div class="loading">
-      <div style="font-size: 3rem;">⚠️</div>
-      <p>${message}</p>
-    </div>
-  `;
-}
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+    loadCategories();
+    loadSites();
+    setupSearch();
+});

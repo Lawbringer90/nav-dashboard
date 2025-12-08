@@ -26,11 +26,10 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
-      - name: 更新配置文件（使用 Secrets）
+      - name: 更新 wrangler.toml 配置
         run: |
           echo "使用 Secrets 更新 wrangler.toml..."
           
-          # 创建临时配置文件
           cat > wrangler.toml << EOF
           name = "nav-dashboard"
           main = "src/index.js"
@@ -46,9 +45,6 @@ jobs:
           [[kv_namespaces]]
           binding = "KV"
           id = "${{ secrets.KV_NAMESPACE_ID }}"
-          
-          # Pages 配置
-          pages_build_output_dir = "public"
           EOF
           
           echo "✅ 配置文件已更新"
@@ -63,52 +59,18 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         continue-on-error: true
 
-      - name: 检查并创建 Pages 项目
+      - name: 部署 Workers
         run: |
-          echo "检查 Pages 项目是否存在..."
-          
-          # 尝试创建项目（如果已存在会跳过）
-          wrangler pages project create ${{ env.PROJECT_NAME }} --production-branch=main || echo "项目可能已存在，继续..."
+          echo "部署 Workers API..."
+          wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        continue-on-error: true
 
       - name: 部署 Pages
         run: |
-          echo "部署 Pages..."
+          echo "部署 Pages 静态文件..."
           wrangler pages deploy public --project-name=${{ env.PROJECT_NAME }} --branch=main --commit-dirty=true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: 配置 Pages 绑定
-        run: |
-          echo "自动配置 D1 和 KV 绑定..."
-          
-          # 使用 Cloudflare API 配置 Pages 绑定
-          curl -X PATCH "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/${{ env.PROJECT_NAME }}" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            --data '{
-              "deployment_configs": {
-                "production": {
-                  "d1_databases": {
-                    "DB": {
-                      "id": "${{ secrets.D1_DATABASE_ID }}"
-                    }
-                  },
-                  "kv_namespaces": {
-                    "KV": {
-                      "id": "${{ secrets.KV_NAMESPACE_ID }}"
-                    }
-                  }
-                }
-              }
-            }'
-          
-          echo ""
-          echo "✅ D1 和 KV 绑定已配置"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -118,10 +80,7 @@ jobs:
           echo "✅ 部署完成！"
           echo ""
           echo "🌐 访问地址："
-          echo "  • 主页: https://${{ env.PROJECT_NAME }}.pages.dev"
-          echo "  • 管理后台: https://${{ env.PROJECT_NAME }}.pages.dev/admin.html"
+          echo "  • Workers API: https://nav-dashboard.你的账户.workers.dev"
+          echo "  • Pages 前端: https://${{ env.PROJECT_NAME }}.pages.dev"
           echo ""
-          echo "⚠️ 首次部署后需要配置 Pages 绑定（只需一次）："
-          echo "  访问: https://dash.cloudflare.com → Pages → ${{ env.PROJECT_NAME }} → Settings → Functions"
-          echo "  1. 添加 D1 绑定: 变量名 DB, 数据库 nav-dashboard-db"
-          echo "  2. 添加 KV 绑定: 变量名 KV, 命名空间 ID ${{ secrets.KV_NAMESPACE_ID }}"
+          echo "📝 注意: 前端需要配置 Workers API 地址"
