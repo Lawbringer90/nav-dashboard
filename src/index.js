@@ -149,6 +149,12 @@ async function handleAPI(request, env, pathname, corsHeaders) {
         if (method === 'DELETE') return await deleteCategory(id, env, corsHeaders);
     }
 
+    // Settings API
+    if (pathname === '/api/settings/background') {
+        if (method === 'GET') return await getBackgroundSetting(env, corsHeaders);
+        if (method === 'PUT') return await updateBackgroundSetting(request, env, corsHeaders);
+    }
+
     if (pathname === '/api/upload' && method === 'POST') {
         return await uploadFile(request, env, corsHeaders);
     }
@@ -416,4 +422,40 @@ function base64ToArrayBuffer(base64) {
         bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes.buffer;
+}
+
+// ==================== Settings API Functions ====================
+
+// 获取背景图设置
+async function getBackgroundSetting(env, headers) {
+    try {
+        const result = await env.DB.prepare('SELECT value FROM settings WHERE key = ?')
+            .bind('background_image')
+            .first();
+
+        const backgroundUrl = result ? result.value : 'https://images.unsplash.com/photo-1484821582734-6c6c9f99a672?q=80&w=2000&auto=format&fit=crop';
+
+        return jsonResponse({ background_image: backgroundUrl }, 200, headers);
+    } catch (error) {
+        return jsonResponse({ error: error.message }, 500, headers);
+    }
+}
+
+// 更新背景图设置
+async function updateBackgroundSetting(request, env, headers) {
+    try {
+        const { background_image } = await request.json();
+
+        if (!background_image) {
+            return jsonResponse({ error: '背景图URL不能为空' }, 400, headers);
+        }
+
+        await env.DB.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+            .bind('background_image', background_image)
+            .run();
+
+        return jsonResponse({ message: '背景图更新成功', background_image }, 200, headers);
+    } catch (error) {
+        return jsonResponse({ error: error.message }, 500, headers);
+    }
 }

@@ -3,6 +3,24 @@ const API_BASE = '';  // 空字符串表示相对路径
 
 // ==================== 主要功能 ====================
 
+// 加载背景图
+async function loadBackground() {
+    try {
+        const response = await fetch(`${API_BASE}/api/settings/background`);
+        const data = await response.json();
+
+        if (data.background_image) {
+            document.body.style.backgroundImage = `linear-gradient(135deg, rgba(224, 195, 252, 0.15) 0%, rgba(142, 197, 252, 0.15) 50%, rgba(184, 240, 245, 0.15) 100%), url('${data.background_image}')`;
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center';
+            document.body.style.backgroundRepeat = 'no-repeat';
+            document.body.style.backgroundAttachment = 'fixed';
+        }
+    } catch (error) {
+        console.error('加载背景图失败:', error);
+    }
+}
+
 // 加载分类
 async function loadCategories() {
     try {
@@ -137,6 +155,7 @@ function setupSearch() {
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
+    loadBackground();
     loadCategories();
     loadSites();
     setupSearch();
