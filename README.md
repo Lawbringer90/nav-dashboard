@@ -9,9 +9,10 @@
 - 📱 **响应式布局** - 完美适配各种设备
 - 🔍 **实时搜索** - 快速查找站点
 - 📁 **分类管理** - 多级分类组织导航
-- 🖼️ **灵活图标** - 支持远程 URL 和上传到 R2
+- 🖼️ **灵活图标** - 支持远程 URL 和本地上传
 - ⚙️ **后台管理** - 完整的 CRUD 功能
 - ⚡ **边缘计算** - Cloudflare 全球网络加速
+- 🚀 **一键部署** - GitHub Actions 自动部署
 
 ## 🏗️ 技术架构
 
@@ -21,280 +22,190 @@
 - **Cloudflare Pages** - 静态站点托管
 - **原生 JavaScript** - 无框架依赖
 
+## 🚀 快速部署
+
+### 第 1 步：Fork 或克隆仓库
+
+```bash
+git clone https://github.com/debbide/nav-dashboard.git
+cd nav-dashboard
+```
+
+### 第 2 步：配置 GitHub Secrets
+
+访问：`设置` → `Secrets and variables` → `Actions`
+
+添加以下 **4 个 Secrets**：
+
+| Secret 名称 | 说明 | 获取方式 |
+|------------|------|---------|
+| `CLOUDFLARE_API_TOKEN` | API 令牌 | [创建 Token](https://dash.cloudflare.com/profile/api-tokens) |
+| `CLOUDFLARE_ACCOUNT_ID` | 账户 ID | [Dashboard](https://dash.cloudflare.com) 右侧 |
+| `D1_DATABASE_ID` | D1 数据库 ID | `wrangler d1 create nav-dashboard-db` |
+| `KV_NAMESPACE_ID` | KV 命名空间 ID | `wrangler kv:namespace create nav-images` |
+
+> 💡 详细配置步骤请查看 [GITHUB_DEPLOY.md](GITHUB_DEPLOY.md)
+
+### 第 3 步：运行部署
+
+1. 进入 GitHub 仓库的 **Actions** 标签
+2. 选择 **Deploy to Cloudflare**
+3. 点击 **Run workflow**
+
+### 第 4 步：配置 Pages 绑定（仅首次）
+
+部署完成后，在 [Cloudflare Dashboard](https://dash.cloudflare.com) 配置：
+
+**Pages** → **nav-dashboard** → **Settings** → **Functions**
+
+添加绑定：
+- **D1**: 变量名 `DB` → 数据库 `nav-dashboard-db`
+- **KV**: 变量名 `KV` → 命名空间（包含 `nav-images`）
+
+### 🎉 完成！
+
+访问：`https://nav-dashboard.pages.dev`
+
 ## 📂 项目结构
 
 ```
 nav-dashboard/
 ├── src/
-│   └── index.js           # Workers 主文件
-├── public/                # 静态文件（Pages）
+│   └── index.js           # Workers API
+├── public/                # 前端静态文件
 │   ├── index.html         # 主页
 │   ├── admin.html         # 管理后台
-│   ├── css/
-│   │   ├── style.css      # 主样式
-│   │   └── admin.css      # 后台样式
-│   └── js/
-│       ├── main.js        # 主页逻辑
-│       └── admin.js       # 后台逻辑
+│   ├── css/               # 样式文件
+│   └── js/                # 脚本文件
+├── .github/
+│   └── workflows/
+│       └── deploy.yml     # GitHub Actions
 ├── schema.sql             # D1 数据库架构
 ├── wrangler.toml          # Cloudflare 配置
 └── package.json
 ```
 
-## 🚀 部署指南
+## 🎯 主要功能
 
-### 前置要求
+### 主页功能
+- ✅ 卡片式站点展示
+- ✅ 分类标签过滤
+- ✅ 实时搜索
+- ✅ 响应式布局
 
-1. Cloudflare 账户
-2. Node.js 和 npm
-3. Wrangler CLI
+### 管理后台
+- ✅ 站点管理（增删改查）
+- ✅ 分类管理
+- ✅ 图片上传（KV 存储）
+- ✅ 排序功能
 
-### 步骤 1: 安装依赖
-
-```bash
-npm install
-```
-
-### 步骤 2: 登录 Cloudflare
-
-```bash
-npx wrangler login
-```
-
-### 步骤 3: 创建 D1 数据库
-
-```bash
-# 创建数据库
-npx wrangler d1 create nav-dashboard-db
-
-# 复制输出的 database_id，更新到 wrangler.toml 中
-```
-
-### 步骤 4: 初始化数据库
-
-```bash
-# 执行 schema
-npx wrangler d1 execute nav-dashboard-db --file=./schema.sql
-```
-
-### 步骤 5: 创建 R2 存储桶
-
-```bash
-# 创建 R2 存储桶
-npx wrangler r2 bucket create nav-dashboard-images
-
-# 启用公共访问
-# 在 Cloudflare Dashboard -> R2 -> nav-dashboard-images -> Settings
-# 启用 "Public Access" 并记录公共域名 ID
-```
-
-### 步骤 6: 更新配置
-
-编辑 `wrangler.toml`，替换：
-- `YOUR_D1_DATABASE_ID` - 替换为步骤 3 获取的 database_id
-- `YOUR_R2_PUBLIC_ID` - 替换为 R2 存储桶的公共域名 ID
-
-### 步骤 7: 部署 Workers
-
-```bash
-npm run deploy
-```
-
-### 步骤 8: 部署 Pages
-
-```bash
-# 方式 1: 通过 CLI
-npm run pages:deploy
-
-# 方式 2: 通过 Git（推荐）
-# 1. 将代码推送到 GitHub
-# 2. 在 Cloudflare Dashboard -> Pages 中连接仓库
-# 3. 设置构建目录为 "public"
-# 4. 部署
-```
-
-### 步骤 9: 配置 Pages 路由（重要）
-
-在 Cloudflare Pages 项目设置中，添加 Workers 路由：
-
-1. 进入 Pages 项目 -> Settings -> Functions
-2. 添加 Service Binding:
-   - Variable name: `API`
-   - Service: `nav-dashboard` (你的 Workers 名称)
-   - Environment: `production`
-
-或者使用 Pages Functions，在 `public/_worker.js` 中：
-
-```javascript
-export { default } from '../src/index.js';
-```
-
-## 🧪 本地开发
-
-### 开发 Workers
-
-```bash
-npm run dev
-```
-
-访问: http://localhost:8787
-
-### 开发 Pages
-
-```bash
-npm run pages:dev
-```
-
-访问: http://localhost:8788
-
-## 📋 API 文档
+## 📋 API 接口
 
 ### 站点接口
-
 - `GET /api/sites` - 获取所有站点
-  - 查询参数: `category` (分类ID), `search` (搜索关键词)
-- `GET /api/sites/:id` - 获取单个站点
 - `POST /api/sites` - 创建站点
 - `PUT /api/sites/:id` - 更新站点
 - `DELETE /api/sites/:id` - 删除站点
 
 ### 分类接口
-
 - `GET /api/categories` - 获取所有分类
 - `POST /api/categories` - 创建分类
 - `PUT /api/categories/:id` - 更新分类
 - `DELETE /api/categories/:id` - 删除分类
 
-### 文件上传
-
+### 文件接口
 - `POST /api/upload` - 上传图片到 KV
-  - Content-Type: `multipart/form-data`
-  - 字段: `image`
-  - 返回: `/api/images/{filename}`
 - `GET /api/images/{filename}` - 获取图片
 
-## 🔧 配置说明
+## 🎨 设计特色
 
-### wrangler.toml
-
-```toml
-name = "nav-dashboard"
-main = "src/index.js"
-compatibility_date = "2024-01-01"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "nav-dashboard-db"
-database_id = "YOUR_D1_DATABASE_ID"
-
-[[kv_namespaces]]
-binding = "KV"
-id = "YOUR_KV_NAMESPACE_ID"
+### 磨砂玻璃效果
+```css
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
 ```
 
-## 🎯 使用说明
+### 暖色调配色
+- 主色：`#ff9a56` 🧡
+- 辅助色：`#ffb347` 🍊
+- 渐变背景：紫色到橙色
 
-### 访问站点
+## 🔄 更新流程
 
-部署完成后，访问你的 Pages 域名：
-- 主页: `https://your-project.pages.dev`
-- 管理后台: `https://your-project.pages.dev/admin.html`
+配置完成后，以后只需：
 
-### 添加站点
+```bash
+git add .
+git commit -m "更新内容"
+git push
+```
 
-1. 访问管理后台
-2. 点击"添加站点"
-3. 填写站点信息
-4. 选择分类
-5. 上传 Logo 或输入远程 URL
-6. 保存
+GitHub Actions 会自动部署！🚀
 
-### 管理分类
+## 📚 文档
 
-1. 在管理后台切换到"分类管理"
-2. 添加或编辑分类
-3. 设置图标（Emoji）和颜色
-4. 调整排序
+- [DEPLOY.md](DEPLOY.md) - 快速部署指南
+- [GITHUB_DEPLOY.md](GITHUB_DEPLOY.md) - 详细部署文档
+- [.github/SECRETS_SETUP.md](.github/SECRETS_SETUP.md) - Secrets 配置
+- [.github/KV_SETUP.md](.github/KV_SETUP.md) - KV 存储说明
+
+## 🛠️ 本地开发
+
+```bash
+# 安装依赖
+npm install
+
+# 本地开发
+npm run dev
+
+# 部署 Workers
+npm run deploy
+
+# 部署 Pages
+npm run pages:deploy
+```
 
 ## 🔒 安全建议
 
-1. **添加身份验证** - 为管理后台添加 Cloudflare Access 保护
-2. **限制 API** - 使用 Workers 限流功能
-3. **CORS 配置** - 根据需要调整 CORS 策略
-4. **环境变量** - 敏感信息使用 Secrets 存储
+生产环境建议：
+1. 为管理后台添加身份验证
+2. 使用 HTTPS
+3. 限制 API 访问频率
+4. 定期备份数据
 
-## 💡 优化建议
-
-### 性能优化
-
-1. **启用缓存**
-```javascript
-// 在 Workers 中添加缓存
-const cache = caches.default;
-```
-
-2. **使用 KV 缓存热点数据**
-```toml
-[[kv_namespaces]]
-binding = "CACHE"
-id = "your_kv_id"
-```
-
-### 功能扩展
-
-- 添加站点访问统计
-- 实现标签系统
-- 支持导入/导出
-- 添加站点收藏功能
-- 实现评分和评论
-
-## 📊 数据库管理
+## 📊 数据管理
 
 ### 查询数据
-
 ```bash
 npx wrangler d1 execute nav-dashboard-db --command="SELECT * FROM sites"
 ```
 
 ### 备份数据
-
 ```bash
 npx wrangler d1 export nav-dashboard-db --output=backup.sql
 ```
 
 ### 恢复数据
-
 ```bash
 npx wrangler d1 execute nav-dashboard-db --file=backup.sql
 ```
 
 ## 🐛 故障排查
 
-### Workers 部署失败
+### 部署失败？
+1. 检查 4 个 Secrets 是否正确配置
+2. 验证 API Token 权限
+3. 查看 Actions 日志
 
-- 检查 `wrangler.toml` 配置
-- 确认 D1 database_id 正确
-- 查看部署日志: `npx wrangler tail`
+### Pages 显示错误？
+确认已配置 D1 和 KV 绑定
 
-### 图片上传失败
-
-- 确认 KV 命名空间已创建
-- 检查文件大小（限制 2MB）
-- 验证文件类型是否支持
-
-### API 调用失败
-
-- 检查 CORS 配置
-- 确认 Workers 路由正确
-- 查看浏览器控制台错误
-
-## 📝 更新日志
-
-### v1.0.0 (2024-12-08)
-- ✅ 初始版本发布
-- ✅ 完整的 CRUD 功能
-- ✅ Cloudflare 全平台部署
-- ✅ 磨砂玻璃设计风格
+### 图片无法上传？
+检查 KV 命名空间绑定是否正确
 
 ## 📄 许可证
 
@@ -306,4 +217,4 @@ MIT License
 
 ---
 
-**享受你的 Cloudflare 导航站！** ⚡🎉
+**现在就开始部署你的导航站吧！** ⚡🎉
