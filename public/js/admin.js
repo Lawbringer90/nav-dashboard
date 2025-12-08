@@ -189,7 +189,7 @@ async function handleSiteSubmit(e) {
         }
     } catch (error) {
         console.error('保存站点失败:', error);
-        showNotification('保存失败', 'error');
+        showNotification(`保存失败: ${error.message}`, 'error');
     }
 }
 
