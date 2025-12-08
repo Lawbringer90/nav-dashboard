@@ -19,3 +19,13 @@ INSERT INTO sites (name, url, description, logo, category_id, sort_order) VALUES
   ('GitHub', 'https://github.com', '全球最大的代码托管平台', 'https://github.githubassets.com/favicons/favicon.svg', 2, 1),
   ('Google', 'https://google.com', '全球最大的搜索引擎', 'https://www.google.com/favicon.ico', 1, 2),
   ('Stack Overflow', 'https://stackoverflow.com', '程序员问答社区', 'https://cdn.sstatic.net/Sites/stackoverflow/Img/favicon.ico', 2, 3);
+
+-- 创建设置表（如果不存在）
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+-- 插入默认背景图设置
+INSERT OR REPLACE INTO settings (key, value) VALUES
+  ('background_image', 'https://images.unsplash.com/photo-1484821582734-6c6c9f99a672?q=80&w=2000&auto=format&fit=crop');
