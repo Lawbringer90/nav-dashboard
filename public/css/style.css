@@ -1073,7 +1073,9 @@ body {
 }
 
 /* 暗色模式 - 侧边栏 */
-.dark-mode .sidebar,
+.dark-mode .sidebar { background: transparent; }
+
+.dark-mode
 .dark-mode .category-tab {
   background: rgba(30, 41, 59, 0.6);
   color: #e2e8f0;
@@ -1123,3 +1125,4 @@ body {
 .dark-mode .engine-btn.active {
   background: rgba(51, 65, 85, 0.7);
 }
+
