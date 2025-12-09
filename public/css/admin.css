@@ -495,3 +495,48 @@ textarea.form-input {
 .sortable-chosen {
     background: rgba(255, 154, 86, 0.2) !important;
 }
+/* 移动端增强样式 */
+@media (max-width: 480px) {
+    .admin-main {
+        padding: 0.5rem;
+    }
+
+    .nav-item {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .panel-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .data-table {
+        font-size: 0.8rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.4rem 0.5rem;
+    }
+
+    .table-logo {
+        width: 24px;
+        height: 24px;
+    }
+
+    .modal-content {
+        margin: 0.5rem;
+        padding: 1rem;
+    }
+
+    .form-input {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+}

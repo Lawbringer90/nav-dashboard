@@ -8,6 +8,7 @@ let currentTab = 'sites';
 let editingSiteId = null;
 let editingCategoryId = null;
 let currentCategoryFilter = 'all';  // 当前分类筛选
+let currentSearchTerm = '';  // 当前搜索关键词
 
 // DOM 加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
@@ -108,13 +109,27 @@ function renderSitesTable() {
 
     // 根据当前筛选条件过滤站点
     let filteredSites = sites;
+
+    // 分类筛选
     if (currentCategoryFilter !== 'all') {
         const categoryId = parseInt(currentCategoryFilter);
-        filteredSites = sites.filter(site => site.category_id === categoryId);
+        filteredSites = filteredSites.filter(site => site.category_id === categoryId);
+    }
+
+    // 搜索关键词筛选
+    if (currentSearchTerm) {
+        const term = currentSearchTerm.toLowerCase();
+        filteredSites = filteredSites.filter(site =>
+            site.name.toLowerCase().includes(term) ||
+            site.url.toLowerCase().includes(term) ||
+            (site.description && site.description.toLowerCase().includes(term))
+        );
     }
 
     if (filteredSites.length === 0) {
-        const msg = currentCategoryFilter === 'all' ? '暂无站点数据' : '该分类下暂无站点';
+        let msg = '暂无站点数据';
+        if (currentSearchTerm) msg = '未找到匹配的站点';
+        else if (currentCategoryFilter !== 'all') msg = '该分类下暂无站点';
         tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem;">${msg}</td></tr>`;
         return;
     }
@@ -339,17 +354,25 @@ function filterSitesByCategory() {
     renderSitesTable();
 }
 
+// 按关键词搜索站点
+function filterSitesBySearch() {
+    const input = document.getElementById('siteSearchInput');
+    currentSearchTerm = input.value.trim();
+    renderSitesTable();
+}
+
 // 渲染分类表格
 function renderCategoriesTable() {
     const tbody = document.getElementById('categoriesTableBody');
 
     if (categories.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">暂无分类数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">暂无分类数据</td></tr>';
         return;
     }
 
     tbody.innerHTML = categories.map(cat => `
-    <tr>
+    <tr data-id="${cat.id}">
+      <td class="drag-handle" style="cursor: grab; padding: 0.5rem; color: rgba(255,255,255,0.6); font-size: 1.2rem; text-align: center;">⋮⋮</td>
       <td class="table-icon">${cat.icon || '-'}</td>
       <td>${escapeHtml(cat.name)}</td>
       <td>
@@ -366,6 +389,50 @@ function renderCategoriesTable() {
       </td>
     </tr>
   `).join('');
+
+    // 初始化分类拖拽排序
+    initCategorySortable();
+}
+
+// 初始化分类拖拽排序
+function initCategorySortable() {
+    const tbody = document.getElementById('categoriesTableBody');
+    if (typeof Sortable !== 'undefined' && tbody.children.length > 0 && tbody.children[0].dataset.id) {
+        new Sortable(tbody, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async function (evt) {
+                const rows = tbody.querySelectorAll('tr[data-id]');
+                const newOrder = Array.from(rows).map((row, index) => ({
+                    id: parseInt(row.dataset.id),
+                    sort_order: index
+                }));
+                await saveCategoryOrder(newOrder);
+            }
+        });
+    }
+}
+
+// 保存分类排序
+async function saveCategoryOrder(newOrder) {
+    try {
+        const response = await fetch('/api/categories/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: newOrder })
+        });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('分类排序已保存', 'success');
+            await loadCategories();
+        } else {
+            showNotification('保存排序失败', 'error');
+        }
+    } catch (error) {
+        console.error('保存分类排序失败:', error);
+        showNotification('保存排序失败', 'error');
+    }
 }
 
 // 打开分类模态框（新建）
@@ -576,11 +643,28 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// 显示通知
+// 显示通知 (Toast)
 function showNotification(message, type = 'info') {
-    // 简单的 alert 实现，后续可以改为更美观的 toast
+    // 获取或创建 toast 容器
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    // 创建 toast 元素
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
     const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    alert(`${icon} ${message}`);
+    toast.innerHTML = `${icon} ${message}`;
+    container.appendChild(toast);
+
+    // 3秒后自动消失
+    setTimeout(() => {
+        toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 

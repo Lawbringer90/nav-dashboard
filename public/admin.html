@@ -199,8 +199,10 @@
                     <div class="panel-header">
                         <h2>🌐 站点管理</h2>
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <select id="siteCategoryFilter" class="form-input" style="width: auto; min-width: 150px;"
-                                onchange="filterSitesByCategory()">
+                            <input type="text" id="siteSearchInput" class="form-input"
+                                style="width: auto; min-width: 200px;" placeholder=" 搜索站点..."
+                                oninput="filterSitesBySearch()">`n <select id="siteCategoryFilter" class="form-input"
+                                style="width: auto; min-width: 150px;" onchange="filterSitesByCategory()">
                                 <option value="all">📁 全部分类</option>
                             </select>
                             <button class="btn-primary" onclick="openSiteModal()">
@@ -250,6 +252,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
+                                    <th style="width: 40px;"></th>
                                     <th>图标</th>
                                     <th>名称</th>
                                     <th>颜色</th>
@@ -450,8 +453,23 @@
         </div>
     </div>
 
-    <script>
-        // 密码验证 - 使用API
+        <script>
+        // Session过期时间（2小时）
+        const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
+
+        function isSessionExpired() {
+            const loginTime = sessionStorage.getItem('adminLoginTime');
+            if (!loginTime) return true;
+            return Date.now() - parseInt(loginTime) > SESSION_TIMEOUT;
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminLoginTime');
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('adminContent').style.display = 'none';
+        }
+
         async function checkPassword() {
             const input = document.getElementById('adminPassword').value;
             try {
@@ -465,6 +483,7 @@
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('adminContent').style.display = 'block';
                     sessionStorage.setItem('adminLoggedIn', 'true');
+                    sessionStorage.setItem('adminLoginTime', Date.now().toString());
                 } else {
                     document.getElementById('loginError').textContent = '密码错误，请重试';
                 }
@@ -473,10 +492,20 @@
             }
         }
 
-        if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+        if (sessionStorage.getItem('adminLoggedIn') === 'true' && !isSessionExpired()) {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('adminContent').style.display = 'block';
+        } else {
+            sessionStorage.removeItem('adminLoggedIn');
+            sessionStorage.removeItem('adminLoginTime');
         }
+
+        setInterval(() => {
+            if (sessionStorage.getItem('adminLoggedIn') === 'true' && isSessionExpired()) {
+                logout();
+                alert('登录已过期，请重新登录');
+            }
+        }, 60000);
 
         // 密码修改表单
         document.getElementById('passwordForm').addEventListener('submit', async function (e) {

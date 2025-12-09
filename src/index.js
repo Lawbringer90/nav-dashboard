@@ -18,6 +18,21 @@ export default {
         try {
             // API 路由
             if (pathname.startsWith('/api/')) {
+                // API 请求限流检查
+                const rateLimitResult = await checkRateLimit(request, env);
+                if (!rateLimitResult.allowed) {
+                    return new Response(JSON.stringify({
+                        success: false,
+                        message: '请求过于频繁，请稍后再试'
+                    }), {
+                        status: 429,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Retry-After': '60',
+                            ...corsHeaders
+                        }
+                    });
+                }
                 return await handleAPI(request, env, pathname, corsHeaders);
             }
 
@@ -152,6 +167,11 @@ async function handleAPI(request, env, pathname, corsHeaders) {
     if (pathname === '/api/categories') {
         if (method === 'GET') return await getCategories(env, corsHeaders);
         if (method === 'POST') return await createCategory(request, env, corsHeaders);
+    }
+
+    // 分类排序 API
+    if (pathname === '/api/categories/reorder' && method === 'POST') {
+        return await reorderCategories(request, env, corsHeaders);
     }
 
     if (pathname.match(/^\/api\/categories\/\d+$/)) {
@@ -387,6 +407,27 @@ async function deleteCategory(id, env, corsHeaders) {
     return jsonResponse({ success: true, message: '分类删除成功' }, 200, corsHeaders);
 }
 
+// 批量更新分类排序
+async function reorderCategories(request, env, corsHeaders) {
+    try {
+        const { order } = await request.json();
+
+        if (!order || !Array.isArray(order)) {
+            return jsonResponse({ success: false, message: '无效的排序数据' }, 400, corsHeaders);
+        }
+
+        for (const item of order) {
+            await env.DB.prepare('UPDATE categories SET sort_order = ? WHERE id = ?')
+                .bind(item.sort_order, item.id)
+                .run();
+        }
+
+        return jsonResponse({ success: true, message: '分类排序更新成功' }, 200, corsHeaders);
+    } catch (error) {
+        return jsonResponse({ success: false, message: '排序更新失败: ' + error.message }, 500, corsHeaders);
+    }
+}
+
 // ==================== 文件上传 ====================
 
 async function uploadFile(request, env, corsHeaders) {
@@ -534,7 +575,7 @@ async function getPasswordSetting(env, headers) {
     }
 }
 
-// 更新密码设置
+// 更新密码设置（使用哈希）
 async function updatePasswordSetting(request, env, headers) {
     try {
         const { old_password, new_password } = await request.json();
@@ -543,19 +584,27 @@ async function updatePasswordSetting(request, env, headers) {
             return jsonResponse({ error: '新密码不能少于4位' }, 400, headers);
         }
 
-        // 验证旧密码
+        // 获取当前密码
         const result = await env.DB.prepare('SELECT value FROM settings WHERE key = ?')
             .bind('admin_password')
             .first();
 
-        const currentPassword = result ? result.value : 'admin123';
+        const storedPassword = result ? result.value : null;
 
-        if (old_password !== currentPassword) {
+        // 验证旧密码（支持明文和哈希两种格式）
+        const oldPasswordHash = await hashPassword(old_password);
+        const isValid = storedPassword === null
+            ? old_password === 'admin123'  // 默认密码
+            : (storedPassword === old_password || storedPassword === oldPasswordHash);
+
+        if (!isValid) {
             return jsonResponse({ error: '原密码错误' }, 401, headers);
         }
 
+        // 存储新密码的哈希
+        const newPasswordHash = await hashPassword(new_password);
         await env.DB.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
-            .bind('admin_password', new_password)
+            .bind('admin_password', newPasswordHash)
             .run();
 
         return jsonResponse({ message: '密码修改成功' }, 200, headers);
@@ -564,7 +613,7 @@ async function updatePasswordSetting(request, env, headers) {
     }
 }
 
-// 验证密码
+// 验证密码（支持明文和哈希）
 async function verifyPassword(request, env, headers) {
     try {
         const { password } = await request.json();
@@ -573,9 +622,15 @@ async function verifyPassword(request, env, headers) {
             .bind('admin_password')
             .first();
 
-        const currentPassword = result ? result.value : 'admin123';
+        const storedPassword = result ? result.value : null;
+        const passwordHash = await hashPassword(password);
 
-        if (password === currentPassword) {
+        // 支持明文密码（向后兼容）和哈希密码
+        const isValid = storedPassword === null
+            ? password === 'admin123'  // 默认密码
+            : (storedPassword === password || storedPassword === passwordHash);
+
+        if (isValid) {
             return jsonResponse({ success: true }, 200, headers);
         } else {
             return jsonResponse({ success: false, error: '密码错误' }, 401, headers);
@@ -584,3 +639,51 @@ async function verifyPassword(request, env, headers) {
         return jsonResponse({ error: error.message }, 500, headers);
     }
 }
+
+// SHA-256 密码哈希
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// API 请求限流检查（100次/分钟）
+async function checkRateLimit(request, env) {
+    const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+    const key = `ratelimit:${ip}`;
+    const limit = 100;  // 每分钟最大请求数
+    const window = 60;  // 时间窗口（秒）
+
+    try {
+        // 从 KV 获取当前计数
+        const data = await env.KV.get(key, 'json');
+        const now = Math.floor(Date.now() / 1000);
+
+        if (data && data.timestamp > now - window) {
+            // 在时间窗口内
+            if (data.count >= limit) {
+                return { allowed: false, remaining: 0 };
+            }
+            // 增加计数
+            await env.KV.put(key, JSON.stringify({
+                count: data.count + 1,
+                timestamp: data.timestamp
+            }), { expirationTtl: window });
+            return { allowed: true, remaining: limit - data.count - 1 };
+        } else {
+            // 新的时间窗口
+            await env.KV.put(key, JSON.stringify({
+                count: 1,
+                timestamp: now
+            }), { expirationTtl: window });
+            return { allowed: true, remaining: limit - 1 };
+        }
+    } catch (error) {
+        // 如果 KV 出错，允许请求通过
+        console.error('Rate limit check error:', error);
+        return { allowed: true, remaining: limit };
+    }
+}
+
