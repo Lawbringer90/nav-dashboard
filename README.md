@@ -8,16 +8,39 @@
 
 ## ✨ 特性
 
-- 🎨 **磨砂玻璃效果** - 现代化的 Glassmorphism 设计风格
-- 🌈 **暖色调配色** - 温暖舒适的视觉体验
-- 📱 **响应式布局** - 完美适配各种设备
-- 🔍 **实时搜索** - 快速查找站点
-- 📁 **分类管理** - 多级分类组织导航
-- 🖼️ **灵活图标** - 支持远程 URL 和本地上传
-- 🔗 **Logo 自动获取** - 支持 Google / toolb.cn 双源 API 一键获取网站图标
-- ⚙️ **后台管理** - 完整的 CRUD 功能
-- ⚡ **边缘计算** - Cloudflare 全球网络加速
-- 🚀 **一键部署** - GitHub Actions 自动部署
+### 🎨 界面设计
+- **磨砂玻璃效果** - 现代化的 Glassmorphism 设计风格
+- **暖色调配色** - 温暖舒适的视觉体验
+- **🌙 暗色模式** - 一键切换明暗主题
+- **📱 响应式布局** - 完美适配各种设备
+- **骨架屏加载** - 优雅的加载体验
+
+### 🔍 搜索功能
+- **多引擎搜索** - 支持 Google、Bing、GitHub 一键切换
+- **实时搜索** - 快速筛选站点
+- **智能建议** - 搜索自动补全
+
+### 📊 访客信息
+- **IP 信息卡片** - 显示访客 IP 和地理位置
+- **天气显示** - 基于位置的实时天气
+- **访问统计** - 记录访问次数
+
+### ⚙️ 管理功能
+- **站点管理** - 完整的 CRUD 功能
+- **分类管理** - 多级分类组织导航
+- **拖拽排序** - 直观的排序操作
+- **🖼️ 灵活图标** - 支持远程 URL 和本地上传
+- **🔗 Logo API** - Google / toolb.cn 双源一键获取
+
+### 🔒 安全特性
+- **密码哈希** - SHA-256 加密存储
+- **API 限流** - 100 次/分钟防护
+- **Session 管理** - 安全的会话控制
+
+### ⚡ 技术特性
+- **边缘计算** - Cloudflare 全球网络加速
+- **🚀 一键部署** - GitHub Actions 自动部署
+- **PWA 支持** - Service Worker 离线缓存
 
 ## 🏗️ 技术架构
 
@@ -85,6 +108,8 @@ nav-dashboard/
 ├── public/                # 前端静态文件
 │   ├── index.html         # 主页
 │   ├── admin.html         # 管理后台
+│   ├── favicon.svg        # 网站图标
+│   ├── sw.js              # Service Worker
 │   ├── css/               # 样式文件
 │   └── js/                # 脚本文件
 ├── .github/
@@ -95,37 +120,39 @@ nav-dashboard/
 └── package.json
 ```
 
-## 🎯 主要功能
-
-### 主页功能
-- ✅ 卡片式站点展示
-- ✅ 分类标签过滤
-- ✅ 实时搜索
-- ✅ 响应式布局
-
-### 管理后台
-- ✅ 站点管理（增删改查）
-- ✅ 分类管理
-- ✅ 图片上传（KV 存储）
-- ✅ 排序功能
-
 ## 📋 API 接口
 
 ### 站点接口
-- `GET /api/sites` - 获取所有站点
-- `POST /api/sites` - 创建站点
-- `PUT /api/sites/:id` - 更新站点
-- `DELETE /api/sites/:id` - 删除站点
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET` | `/api/sites` | 获取所有站点 |
+| `POST` | `/api/sites` | 创建站点 |
+| `PUT` | `/api/sites/:id` | 更新站点 |
+| `DELETE` | `/api/sites/:id` | 删除站点 |
+| `POST` | `/api/sites/reorder` | 批量排序 |
 
 ### 分类接口
-- `GET /api/categories` - 获取所有分类
-- `POST /api/categories` - 创建分类
-- `PUT /api/categories/:id` - 更新分类
-- `DELETE /api/categories/:id` - 删除分类
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET` | `/api/categories` | 获取所有分类 |
+| `POST` | `/api/categories` | 创建分类 |
+| `PUT` | `/api/categories/:id` | 更新分类 |
+| `DELETE` | `/api/categories/:id` | 删除分类 |
+| `POST` | `/api/categories/reorder` | 批量排序 |
 
 ### 文件接口
-- `POST /api/upload` - 上传图片到 KV
-- `GET /api/images/{filename}` - 获取图片
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `POST` | `/api/upload` | 上传图片到 KV |
+| `GET` | `/api/images/:filename` | 获取图片 |
+
+### 设置接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET` | `/api/settings/background` | 获取背景设置 |
+| `POST` | `/api/settings/background` | 更新背景设置 |
+| `POST` | `/api/settings/password` | 修改管理密码 |
+| `POST` | `/api/verify-password` | 验证密码 |
 
 ## 🎨 设计特色
 
@@ -143,6 +170,11 @@ nav-dashboard/
 - 主色：`#ff9a56` 🧡
 - 辅助色：`#ffb347` 🍊
 - 渐变背景：紫色到橙色
+
+### 暗色模式
+- 自动记忆用户偏好
+- 平滑过渡动画
+- 完整的深色配色方案
 
 ## 🔄 更新流程
 
@@ -178,14 +210,6 @@ npm run deploy
 # 部署 Pages
 npm run pages:deploy
 ```
-
-## 🔒 安全建议
-
-生产环境建议：
-1. 为管理后台添加身份验证
-2. 使用 HTTPS
-3. 限制 API 访问频率
-4. 定期备份数据
 
 ## 📊 数据管理
 
