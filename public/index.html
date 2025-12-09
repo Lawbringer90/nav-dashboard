@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>导航站</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=8">
+  <link rel="stylesheet" href="/css/style.css?v=9">
 </head>
 
 <body>
@@ -52,30 +52,13 @@
       <div class="content-wrapper">
         <main class="main-content">
           <div id="sitesGrid" class="sites-grid">
-            <!-- 骨架屏加载 -->
-            <div class="skeleton-card">
-              <div class="skeleton-logo"></div>
-              <div class="skeleton-text"></div>
-            </div>
-            <div class="skeleton-card">
-              <div class="skeleton-logo"></div>
-              <div class="skeleton-text"></div>
-            </div>
-            <div class="skeleton-card">
-              <div class="skeleton-logo"></div>
-              <div class="skeleton-text"></div>
-            </div>
-            <div class="skeleton-card">
-              <div class="skeleton-logo"></div>
-              <div class="skeleton-text"></div>
-            </div>
-            <div class="skeleton-card">
-              <div class="skeleton-logo"></div>
-              <div class="skeleton-text"></div>
-            </div>
-            <div class="skeleton-card">
-              <div class="skeleton-logo"></div>
-              <div class="skeleton-text"></div>
+            <!-- 由 JavaScript 动态生成骨架屏和站点卡片 -->
+          </div>
+
+          <!-- 无限滚动触发器 -->
+          <div id="loadMoreTrigger" class="load-more-trigger">
+            <div class="loading-dots">
+              <span></span><span></span><span></span>
             </div>
           </div>
 
@@ -125,7 +108,7 @@
     </div>
   </div>
 
-  <script src="/js/main.js"></script>
+  <script src="/js/main.js?v=2"></script>
 </body>
 
 </html>

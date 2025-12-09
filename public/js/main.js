@@ -1,6 +1,13 @@
 ﻿// 使用相对路径 - Workers 同时提供前端和 API
 const API_BASE = '';
 
+// ==================== 分页状态 ====================
+let currentPage = 1;
+let isLoading = false;
+let hasMore = true;
+let currentCategory = 'all';
+let currentSearchTerm = '';
+
 // ==================== 主要功能 ====================
 
 // 加载背景图
@@ -35,33 +42,129 @@ async function loadCategories() {
     }
 }
 
-// 加载站点
+// 动态生成骨架屏
+function showSkeletons(count = null) {
+    const container = document.getElementById('sitesGrid');
+    const lastCount = count || parseInt(localStorage.getItem('lastSiteCount')) || 6;
+    const skeletonCount = Math.min(Math.max(lastCount, 4), 12);
+
+    container.innerHTML = Array(skeletonCount).fill(0).map(() => `
+        <div class="skeleton-card">
+            <div class="skeleton-logo"></div>
+            <div class="skeleton-text"></div>
+        </div>
+    `).join('');
+}
+
+// 隐藏骨架屏（带动画）
+function hideSkeletons() {
+    const skeletons = document.querySelectorAll('.skeleton-card');
+    skeletons.forEach((skeleton, index) => {
+        setTimeout(() => {
+            skeleton.classList.add('fade-out');
+        }, index * 30);
+    });
+}
+
+// 加载站点（首次加载）
 async function loadSites(categoryId = 'all', searchTerm = '') {
+    // 重置分页状态
+    currentPage = 1;
+    hasMore = true;
+    currentCategory = categoryId;
+    currentSearchTerm = searchTerm;
+
+    // 显示骨架屏
+    showSkeletons();
+
     try {
-        let url = `${API_BASE}/api/sites`;
-        const params = new URLSearchParams();
-
-        if (categoryId && categoryId !== 'all') {
-            params.append('category', categoryId);
-        }
-
-        if (searchTerm) {
-            params.append('search', searchTerm);
-        }
-
-        if (params.toString()) {
-            url += '?' + params.toString();
-        }
-
-        const response = await fetch(url);
-        const data = await response.json();
+        const data = await fetchSites(categoryId, 1, searchTerm);
 
         if (data.success) {
-            renderSites(data.data);
+            // 记住站点数量用于下次骨架屏
+            localStorage.setItem('lastSiteCount', data.data.length.toString());
+
+            // 隐藏骨架屏后渲染
+            hideSkeletons();
+            setTimeout(() => {
+                renderSites(data.data, false);
+                setupLazyLoad();
+
+                // 更新分页状态
+                if (data.pagination) {
+                    hasMore = data.pagination.hasMore;
+                    updateLoadMoreTrigger();
+                }
+            }, 150);
         }
     } catch (error) {
         console.error('加载站点失败:', error);
+        document.getElementById('sitesGrid').innerHTML = '<div class="no-results">加载失败，请刷新重试</div>';
     }
+}
+
+// 获取站点 API
+async function fetchSites(categoryId, page, searchTerm = '') {
+    let url = `${API_BASE}/api/sites?page=${page}&pageSize=24`;
+
+    if (categoryId && categoryId !== 'all') {
+        url += `&category=${categoryId}`;
+    }
+
+    if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`;
+    }
+
+    const response = await fetch(url);
+    return await response.json();
+}
+
+// 加载更多站点
+async function loadMoreSites() {
+    if (isLoading || !hasMore) return;
+
+    isLoading = true;
+    showLoadingIndicator();
+
+    try {
+        currentPage++;
+        const data = await fetchSites(currentCategory, currentPage, currentSearchTerm);
+
+        if (data.success && data.data.length > 0) {
+            appendSites(data.data);
+            setupLazyLoad();
+
+            if (data.pagination) {
+                hasMore = data.pagination.hasMore;
+            }
+        } else {
+            hasMore = false;
+        }
+    } catch (error) {
+        console.error('加载更多失败:', error);
+        currentPage--; // 回滚页码
+    }
+
+    isLoading = false;
+    hideLoadingIndicator();
+    updateLoadMoreTrigger();
+}
+
+// 追加站点到网格
+function appendSites(sites) {
+    const container = document.getElementById('sitesGrid');
+
+    sites.forEach(site => {
+        const card = createSiteCard(site);
+        if (card) {
+            card.classList.add('site-card-enter');
+            container.appendChild(card);
+            // 触发重绘后添加动画类
+            requestAnimationFrame(() => {
+                card.classList.add('site-card-enter-active');
+            });
+        }
+    });
 }
 
 // 渲染分类
@@ -84,6 +187,7 @@ function renderCategories(categories) {
     container.appendChild(allTab);
 
     // 默认加载第一个分类的站点
+    currentCategory = defaultCategoryId;
     loadSites(defaultCategoryId);
 }
 
@@ -110,42 +214,118 @@ function createCategoryTab(id, name, color, active = false, icon = '') {
 }
 
 // 渲染站点
-function renderSites(sites) {
+function renderSites(sites, append = false) {
     const container = document.getElementById('sitesGrid');
-    container.innerHTML = '';
 
-    if (sites.length === 0) {
+    if (!append) {
+        container.innerHTML = '';
+    }
+
+    if (sites.length === 0 && !append) {
         container.innerHTML = '<div class="no-results">暂无站点</div>';
         return;
     }
 
     sites.forEach(site => {
         const card = createSiteCard(site);
-        container.appendChild(card);
+        if (card) {
+            container.appendChild(card);
+        }
     });
 }
 
-// 创建站点卡片（简化：只显示logo和名称）
+// 创建站点卡片（优化图片加载）
 function createSiteCard(site) {
+    const logo = site.logo || '';
+
+    // 如果没有logo，不创建卡片
+    if (!logo) {
+        return null;
+    }
+
     const card = document.createElement('a');
     card.href = site.url;
     card.target = '_blank';
     card.className = 'site-card glass-effect';
 
-    const logo = site.logo || '';
-
-    // 如果没有logo，不创建卡片
-    if (!logo) {
-        card.style.display = 'none';
-        return card;
-    }
-
     card.innerHTML = `
-        <img class="site-logo" src="${logo}" alt="${site.name}" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <div class="logo-wrapper">
+            <div class="logo-placeholder"></div>
+            <img class="site-logo lazy" 
+                 data-src="${logo}" 
+                 alt="${site.name}">
+        </div>
         <span class="site-name">${site.name}</span>
     `;
 
     return card;
+}
+
+// Intersection Observer 懒加载
+function setupLazyLoad() {
+    const images = document.querySelectorAll('img.lazy:not([src])');
+
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.onload = () => img.classList.add('loaded');
+                    img.onerror = () => img.parentElement.classList.add('fallback');
+                    imageObserver.unobserve(img);
+                }
+            });
+        }, { rootMargin: '50px' });
+
+        images.forEach(img => imageObserver.observe(img));
+    } else {
+        // 降级：直接加载
+        images.forEach(img => {
+            img.src = img.dataset.src;
+            img.onload = () => img.classList.add('loaded');
+        });
+    }
+}
+
+// 无限滚动设置
+function setupInfiniteScroll() {
+    const trigger = document.getElementById('loadMoreTrigger');
+    if (!trigger) return;
+
+    if ('IntersectionObserver' in window) {
+        const scrollObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && hasMore && !isLoading) {
+                loadMoreSites();
+            }
+        }, { rootMargin: '200px' });
+
+        scrollObserver.observe(trigger);
+    }
+}
+
+// 更新加载触发器显示状态
+function updateLoadMoreTrigger() {
+    const trigger = document.getElementById('loadMoreTrigger');
+    if (trigger) {
+        trigger.style.display = hasMore ? 'block' : 'none';
+    }
+}
+
+// 显示加载指示器
+function showLoadingIndicator() {
+    const trigger = document.getElementById('loadMoreTrigger');
+    if (trigger) {
+        trigger.classList.add('loading');
+    }
+}
+
+// 隐藏加载指示器
+function hideLoadingIndicator() {
+    const trigger = document.getElementById('loadMoreTrigger');
+    if (trigger) {
+        trigger.classList.remove('loading');
+    }
 }
 
 // 搜索引擎功能
@@ -192,15 +372,11 @@ function setupSearch() {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/api/sites`);
+            const response = await fetch(`${API_BASE}/api/sites?search=${encodeURIComponent(query)}&pageSize=6`);
             const data = await response.json();
 
             if (data.success) {
-                const matches = data.data.filter(site =>
-                    site.name.toLowerCase().includes(query) ||
-                    site.url.toLowerCase().includes(query) ||
-                    (site.description && site.description.toLowerCase().includes(query))
-                ).slice(0, 6);  // 最多显示6个
+                const matches = data.data.slice(0, 6);
 
                 if (matches.length > 0) {
                     suggestions.innerHTML = `
@@ -262,8 +438,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     loadBackground();
     loadCategories();
-    loadSites();
     setupSearch();
+    setupInfiniteScroll();
     loadIpInfo();
     registerServiceWorker();
 });

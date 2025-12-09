@@ -231,27 +231,50 @@ async function getSites(request, env, corsHeaders) {
     const url = new URL(request.url);
     const category = url.searchParams.get('category');
     const search = url.searchParams.get('search');
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const pageSize = parseInt(url.searchParams.get('pageSize')) || 24;
+    const offset = (page - 1) * pageSize;
 
-    let query = `
-    SELECT s.*, c.name as category_name, c.color as category_color 
-    FROM sites s 
-    LEFT JOIN categories c ON s.category_id = c.id
-  `;
+    // 构建基础查询条件
+    let whereClause = '';
     const params = [];
 
     if (search) {
-        query += ` WHERE s.name LIKE ? OR s.description LIKE ? OR s.url LIKE ?`;
+        whereClause = ` WHERE s.name LIKE ? OR s.description LIKE ? OR s.url LIKE ?`;
         const searchTerm = `%${search}%`;
         params.push(searchTerm, searchTerm, searchTerm);
     } else if (category && category !== 'all') {
-        query += ` WHERE s.category_id = ?`;
+        whereClause = ` WHERE s.category_id = ?`;
         params.push(category);
     }
 
-    query += ` ORDER BY s.sort_order ASC, s.created_at DESC`;
+    // 获取总数
+    const countQuery = `SELECT COUNT(*) as total FROM sites s${whereClause}`;
+    const countResult = await env.DB.prepare(countQuery).bind(...params).first();
+    const total = countResult?.total || 0;
 
-    const { results } = await env.DB.prepare(query).bind(...params).all();
-    return jsonResponse({ success: true, data: results }, 200, corsHeaders);
+    // 获取分页数据
+    const dataQuery = `
+        SELECT s.*, c.name as category_name, c.color as category_color 
+        FROM sites s 
+        LEFT JOIN categories c ON s.category_id = c.id
+        ${whereClause}
+        ORDER BY s.sort_order ASC, s.created_at DESC
+        LIMIT ? OFFSET ?
+    `;
+    const dataParams = [...params, pageSize, offset];
+    const { results } = await env.DB.prepare(dataQuery).bind(...dataParams).all();
+
+    return jsonResponse({
+        success: true,
+        data: results,
+        pagination: {
+            page,
+            pageSize,
+            total,
+            hasMore: offset + results.length < total
+        }
+    }, 200, corsHeaders);
 }
 
 async function getSite(id, env, corsHeaders) {
