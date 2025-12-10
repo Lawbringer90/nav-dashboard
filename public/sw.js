@@ -1,5 +1,5 @@
 // Service Worker for nav-dashboard
-const CACHE_NAME = 'nav-dashboard-v1';
+const CACHE_NAME = 'nav-dashboard-v2';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -32,19 +32,42 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Fetch - network first, fallback to cache
+// Fetch - 智能缓存策略
 self.addEventListener('fetch', event => {
     const { request } = event;
+    const url = new URL(request.url);
 
-    // Skip API requests - always fetch from network
-    if (request.url.includes('/api/')) {
+    // 图片代理请求：Cache First（优先本地缓存）
+    if (url.pathname === '/api/proxy/image') {
+        event.respondWith(
+            caches.match(request).then(cached => {
+                if (cached) {
+                    return cached;
+                }
+                return fetch(request).then(response => {
+                    if (response.ok) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+                    }
+                    return response;
+                }).catch(() => {
+                    // 网络失败返回占位图
+                    return new Response('', { status: 504 });
+                });
+            })
+        );
         return;
     }
 
+    // 其他 API 请求：跳过缓存
+    if (url.pathname.startsWith('/api/')) {
+        return;
+    }
+
+    // 静态资源：Network First, fallback to cache
     event.respondWith(
         fetch(request)
             .then(response => {
-                // Clone and cache successful responses
                 if (response.ok) {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(request, clone));

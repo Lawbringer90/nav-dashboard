@@ -222,7 +222,101 @@ async function handleAPI(request, env, pathname, corsHeaders) {
         }, 200, corsHeaders);
     }
 
+    // Image Proxy API (CDN 缓存加速)
+    if (pathname === '/api/proxy/image' && method === 'GET') {
+        return await proxyImage(request, ctx, corsHeaders);
+    }
+
     return jsonResponse({ success: false, message: 'API Not Found' }, 404, corsHeaders);
+}
+
+// ==================== 图片代理 ====================
+
+// 图片代理（利用 Cloudflare CDN 缓存加速）
+async function proxyImage(request, ctx, corsHeaders) {
+    const url = new URL(request.url);
+    const imageUrl = url.searchParams.get('url');
+
+    if (!imageUrl) {
+        return new Response('Missing url parameter', {
+            status: 400,
+            headers: corsHeaders
+        });
+    }
+
+    // 验证 URL 格式
+    try {
+        new URL(imageUrl);
+    } catch {
+        return new Response('Invalid url parameter', {
+            status: 400,
+            headers: corsHeaders
+        });
+    }
+
+    // 生成缓存键（使用虚拟域名）
+    const cacheKey = new Request(`https://img-cache.nav-dashboard.local/${encodeURIComponent(imageUrl)}`, {
+        method: 'GET'
+    });
+    const cache = caches.default;
+
+    // 尝试从 Cloudflare CDN 缓存获取
+    let response = await cache.match(cacheKey);
+    if (response) {
+        return response;
+    }
+
+    // 从源站获取（带 5 秒超时）
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    try {
+        const fetchResponse = await fetch(imageUrl, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; NavDashboard/1.0)',
+                'Accept': 'image/*'
+            }
+        });
+        clearTimeout(timeout);
+
+        if (!fetchResponse.ok) {
+            return new Response('Image fetch failed', {
+                status: 502,
+                headers: corsHeaders
+            });
+        }
+
+        // 检查是否为图片类型
+        const contentType = fetchResponse.headers.get('Content-Type') || '';
+        if (!contentType.startsWith('image/')) {
+            return new Response('Not an image', {
+                status: 400,
+                headers: corsHeaders
+            });
+        }
+
+        // 构建缓存响应（7天 = 604800秒）
+        response = new Response(fetchResponse.body, {
+            headers: {
+                'Content-Type': contentType,
+                'Cache-Control': 'public, max-age=604800, immutable',
+                ...corsHeaders
+            }
+        });
+
+        // 异步写入 CDN 缓存
+        ctx.waitUntil(cache.put(cacheKey, response.clone()));
+
+        return response;
+    } catch (error) {
+        clearTimeout(timeout);
+        // 超时或网络错误
+        return new Response('Image proxy timeout', {
+            status: 504,
+            headers: corsHeaders
+        });
+    }
 }
 
 // ==================== 站点操作 ====================
