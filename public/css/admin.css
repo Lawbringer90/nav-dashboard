@@ -57,6 +57,8 @@
 /* ==================== 内容面板 ==================== */
 .admin-content {
     min-height: 500px;
+    width: 100%;
+    overflow-x: auto;
 }
 
 .content-panel {
@@ -495,6 +497,7 @@ textarea.form-input {
 .sortable-chosen {
     background: rgba(255, 154, 86, 0.2) !important;
 }
+
 /* 移动端增强样式 */
 @media (max-width: 480px) {
     .admin-main {

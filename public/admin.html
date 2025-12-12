@@ -236,6 +236,37 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- 分页控件 -->
+                    <div id="sitesPagination" class="pagination-container glass-effect"
+                        style="margin-top: 1rem; padding: 1rem; border-radius: 12px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span>每页</span>
+                                <select id="pageSizeSelect" class="form-input" style="width: auto; min-width: 70px;"
+                                    onchange="changePageSize()">
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="50" selected>50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>条，共 <strong id="paginationTotal">0</strong> 条</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <button class="btn-secondary" id="prevPageBtn" onclick="goToPage('prev')" disabled
+                                    style="padding: 0.5rem 1rem;">« 上一页</button>
+                                <span style="margin: 0 0.5rem;">
+                                    第 <input type="number" id="currentPageInput" class="form-input"
+                                        style="width: 60px; text-align: center;" value="1" min="1"
+                                        onchange="goToPageInput()"> 页
+                                    / 共 <strong id="totalPages">1</strong> 页
+                                </span>
+                                <button class="btn-secondary" id="nextPageBtn" onclick="goToPage('next')"
+                                    style="padding: 0.5rem 1rem;">下一页 »</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 分类管理面板 -->
@@ -453,7 +484,7 @@
         </div>
     </div>
 
-        <script>
+    <script>
         // Session过期时间（2小时）
         const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
 
@@ -555,4 +586,3 @@
 </body>
 
 </html>
-

@@ -10,6 +10,12 @@ let editingCategoryId = null;
 let currentCategoryFilter = 'all';  // 当前分类筛选
 let currentSearchTerm = '';  // 当前搜索关键词
 
+// 分页状态
+let currentPage = 1;
+let pageSize = 50;
+let totalSites = 0;
+let totalPages = 1;
+
 // DOM 加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     init();
@@ -90,12 +96,34 @@ function switchTab(tab) {
 // 加载站点列表
 async function loadSites() {
     try {
-        const response = await fetch('/api/sites');
+        // 构建查询参数
+        const params = new URLSearchParams({
+            page: currentPage,
+            pageSize: pageSize
+        });
+
+        // 添加分类筛选
+        if (currentCategoryFilter !== 'all') {
+            params.append('category', currentCategoryFilter);
+        }
+
+        // 添加搜索关键词
+        if (currentSearchTerm) {
+            params.append('search', currentSearchTerm);
+        }
+
+        const response = await fetch(`/api/sites?${params.toString()}`);
         const result = await response.json();
 
         if (result.success) {
             sites = result.data;
+            // 更新分页信息
+            if (result.pagination) {
+                totalSites = result.pagination.total;
+                totalPages = Math.ceil(totalSites / pageSize) || 1;
+            }
             renderSitesTable();
+            updatePaginationUI();
         }
     } catch (error) {
         console.error('加载站点失败:', error);
@@ -107,26 +135,8 @@ async function loadSites() {
 function renderSitesTable() {
     const tbody = document.getElementById('sitesTableBody');
 
-    // 根据当前筛选条件过滤站点
-    let filteredSites = sites;
-
-    // 分类筛选
-    if (currentCategoryFilter !== 'all') {
-        const categoryId = parseInt(currentCategoryFilter);
-        filteredSites = filteredSites.filter(site => site.category_id === categoryId);
-    }
-
-    // 搜索关键词筛选
-    if (currentSearchTerm) {
-        const term = currentSearchTerm.toLowerCase();
-        filteredSites = filteredSites.filter(site =>
-            site.name.toLowerCase().includes(term) ||
-            site.url.toLowerCase().includes(term) ||
-            (site.description && site.description.toLowerCase().includes(term))
-        );
-    }
-
-    if (filteredSites.length === 0) {
+    // 直接使用 API 返回的数据（筛选已在后端完成）
+    if (sites.length === 0) {
         let msg = '暂无站点数据';
         if (currentSearchTerm) msg = '未找到匹配的站点';
         else if (currentCategoryFilter !== 'all') msg = '该分类下暂无站点';
@@ -134,7 +144,7 @@ function renderSitesTable() {
         return;
     }
 
-    tbody.innerHTML = filteredSites.map(site => `
+    tbody.innerHTML = sites.map(site => `
     <tr data-id="${site.id}">
       <td class="drag-handle" style="cursor: grab; padding: 0.5rem; color: rgba(255,255,255,0.6); font-size: 1.2rem; text-align: center;">⋮⋮</td>
       <td>
@@ -346,20 +356,6 @@ function populateCategoryFilter() {
     select.innerHTML = '<option value="all">📁 全部分类</option>' +
         categories.map(cat => `<option value="${cat.id}">${cat.icon || '📁'} ${cat.name}</option>`).join('');
     select.value = currentValue;
-}
-
-// 按分类筛选站点
-function filterSitesByCategory() {
-    const select = document.getElementById('siteCategoryFilter');
-    currentCategoryFilter = select.value;
-    renderSitesTable();
-}
-
-// 按关键词搜索站点
-function filterSitesBySearch() {
-    const input = document.getElementById('siteSearchInput');
-    currentSearchTerm = input.value.trim();
-    renderSitesTable();
 }
 
 // 渲染分类表格
@@ -760,3 +756,81 @@ window.switchTab = function (tabName) {
         initBackgroundSettings();
     }
 };
+
+// ==================== 分页功能 ====================
+
+// 更新分页 UI
+function updatePaginationUI() {
+    const paginationTotal = document.getElementById('paginationTotal');
+    const currentPageInput = document.getElementById('currentPageInput');
+    const totalPagesEl = document.getElementById('totalPages');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+    if (paginationTotal) paginationTotal.textContent = totalSites;
+    if (currentPageInput) currentPageInput.value = currentPage;
+    if (totalPagesEl) totalPagesEl.textContent = totalPages;
+    if (pageSizeSelect) pageSizeSelect.value = pageSize;
+
+    // 更新按钮状态
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+}
+
+// 翻页
+function goToPage(direction) {
+    if (direction === 'prev' && currentPage > 1) {
+        currentPage--;
+        loadSites();
+    } else if (direction === 'next' && currentPage < totalPages) {
+        currentPage++;
+        loadSites();
+    }
+}
+
+// 跳转到指定页
+function goToPageInput() {
+    const input = document.getElementById('currentPageInput');
+    let page = parseInt(input.value);
+
+    if (isNaN(page) || page < 1) {
+        page = 1;
+    } else if (page > totalPages) {
+        page = totalPages;
+    }
+
+    if (page !== currentPage) {
+        currentPage = page;
+        loadSites();
+    } else {
+        input.value = currentPage;
+    }
+}
+
+// 改变每页条数
+function changePageSize() {
+    const select = document.getElementById('pageSizeSelect');
+    const newPageSize = parseInt(select.value);
+
+    if (newPageSize !== pageSize) {
+        pageSize = newPageSize;
+        currentPage = 1;  // 重置到第一页
+        loadSites();
+    }
+}
+
+// 重写筛选函数，加入分页重置
+function filterSitesByCategory() {
+    const select = document.getElementById('siteCategoryFilter');
+    currentCategoryFilter = select.value;
+    currentPage = 1;  // 筛选时重置页码
+    loadSites();
+}
+
+function filterSitesBySearch() {
+    const input = document.getElementById('siteSearchInput');
+    currentSearchTerm = input.value.trim();
+    currentPage = 1;  // 搜索时重置页码
+    loadSites();
+}
