@@ -310,6 +310,46 @@ function hashPassword(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+// 登录失败限制（防暴力破解）
+const loginAttempts = new Map(); // IP -> { count, lastAttempt }
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15分钟
+
+function getClientIp(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+}
+
+function checkLoginLimit(ip) {
+    const attempt = loginAttempts.get(ip);
+    if (!attempt) return { allowed: true };
+
+    // 检查是否已过锁定时间
+    if (Date.now() - attempt.lastAttempt > LOCKOUT_DURATION) {
+        loginAttempts.delete(ip);
+        return { allowed: true };
+    }
+
+    if (attempt.count >= MAX_LOGIN_ATTEMPTS) {
+        const remainingMs = LOCKOUT_DURATION - (Date.now() - attempt.lastAttempt);
+        const remainingMin = Math.ceil(remainingMs / 60000);
+        return { allowed: false, remainingMin };
+    }
+
+    return { allowed: true };
+}
+
+function recordLoginFailure(ip) {
+    const attempt = loginAttempts.get(ip) || { count: 0, lastAttempt: 0 };
+    attempt.count++;
+    attempt.lastAttempt = Date.now();
+    loginAttempts.set(ip, attempt);
+    return MAX_LOGIN_ATTEMPTS - attempt.count;
+}
+
+function resetLoginAttempts(ip) {
+    loginAttempts.delete(ip);
+}
+
 app.get('/api/settings/password', (req, res) => {
     res.json({ has_password: true });
 });
@@ -338,6 +378,17 @@ app.put('/api/settings/password', (req, res) => {
 
 app.post('/api/auth/verify', (req, res) => {
     const { password } = req.body;
+    const ip = getClientIp(req);
+
+    // 检查是否被锁定
+    const limitCheck = checkLoginLimit(ip);
+    if (!limitCheck.allowed) {
+        return res.status(429).json({
+            success: false,
+            error: `登录尝试次数过多，请 ${limitCheck.remainingMin} 分钟后再试`
+        });
+    }
+
     const result = db.prepare('SELECT value FROM settings WHERE key = ?').get('admin_password');
     const stored = result?.value || null;
     const inputHash = hashPassword(password);
@@ -347,9 +398,14 @@ app.post('/api/auth/verify', (req, res) => {
         : (stored === password || stored === inputHash);
 
     if (isValid) {
+        resetLoginAttempts(ip);
         res.json({ success: true });
     } else {
-        res.status(401).json({ success: false, error: '密码错误' });
+        const remaining = recordLoginFailure(ip);
+        res.status(401).json({
+            success: false,
+            error: remaining > 0 ? `密码错误，还剩 ${remaining} 次尝试机会` : '密码错误，账号已锁定15分钟'
+        });
     }
 });
 
@@ -490,6 +546,98 @@ app.post('/api/import', (req, res) => {
         res.json({
             success: true,
             message: `导入成功: ${data.categories.length} 个分类, ${data.sites.length} 个站点`
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: '导入失败: ' + error.message });
+    }
+});
+
+// --- 书签导入 API ---
+app.post('/api/import/bookmarks', express.text({ type: 'text/html', limit: '5mb' }), (req, res) => {
+    try {
+        const html = req.body;
+
+        if (!html || typeof html !== 'string') {
+            return res.status(400).json({ success: false, message: '无效的书签文件' });
+        }
+
+        // 简单的 HTML 书签解析
+        const bookmarks = [];
+        const categories = new Map();
+        let currentFolder = '未分类';
+
+        // 匹配文件夹名
+        const folderRegex = /<DT><H3[^>]*>([^<]+)<\/H3>/gi;
+        // 匹配书签
+        const bookmarkRegex = /<DT><A[^>]*HREF="([^"]+)"[^>]*>([^<]+)<\/A>/gi;
+        // 匹配文件夹结束
+        const folderEndRegex = /<\/DL>/gi;
+
+        // 逐行解析
+        const lines = html.split('\n');
+        const folderStack = ['未分类'];
+
+        for (const line of lines) {
+            // 检查文件夹开始
+            const folderMatch = /<DT><H3[^>]*>([^<]+)<\/H3>/i.exec(line);
+            if (folderMatch) {
+                currentFolder = folderMatch[1].trim();
+                folderStack.push(currentFolder);
+                if (!categories.has(currentFolder)) {
+                    categories.set(currentFolder, { name: currentFolder, icon: '📁', color: '#a78bfa' });
+                }
+                continue;
+            }
+
+            // 检查书签
+            const bookmarkMatch = /<DT><A[^>]*HREF="([^"]+)"[^>]*>([^<]+)<\/A>/i.exec(line);
+            if (bookmarkMatch) {
+                const url = bookmarkMatch[1].trim();
+                const name = bookmarkMatch[2].trim();
+
+                // 跳过 javascript: 和空链接
+                if (url.startsWith('javascript:') || !url) continue;
+
+                bookmarks.push({
+                    name: name.substring(0, 50), // 限制名称长度
+                    url,
+                    category: folderStack[folderStack.length - 1],
+                    logo: `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(url).hostname)}`
+                });
+                continue;
+            }
+
+            // 检查文件夹结束
+            if (/<\/DL>/i.test(line) && folderStack.length > 1) {
+                folderStack.pop();
+            }
+        }
+
+        if (bookmarks.length === 0) {
+            return res.status(400).json({ success: false, message: '未找到有效书签' });
+        }
+
+        // 导入到数据库
+        const categoryIdMap = {};
+        const insertCategory = db.prepare('INSERT INTO categories (name, icon, color, sort_order) VALUES (?, ?, ?, ?)');
+        const insertSite = db.prepare('INSERT INTO sites (name, url, description, logo, category_id, sort_order) VALUES (?, ?, ?, ?, ?, ?)');
+
+        let sortOrder = 0;
+        for (const [name, cat] of categories) {
+            const result = insertCategory.run(cat.name, cat.icon, cat.color, sortOrder++);
+            categoryIdMap[name] = result.lastInsertRowid;
+        }
+
+        let siteOrder = 0;
+        for (const bm of bookmarks) {
+            const categoryId = categoryIdMap[bm.category] || null;
+            insertSite.run(bm.name, bm.url, '', bm.logo, categoryId, siteOrder++);
+        }
+
+        res.json({
+            success: true,
+            message: `导入成功: ${categories.size} 个分类, ${bookmarks.length} 个书签`,
+            imported: { categories: categories.size, bookmarks: bookmarks.length }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: '导入失败: ' + error.message });

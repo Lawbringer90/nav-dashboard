@@ -1276,3 +1276,117 @@ body {
 .dark-mode .loading-dots span {
   background: #a78bfa;
 }
+
+/* ==================== 移动端优化增强 ==================== */
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 移除 hover 效果，改用 active 反馈 */
+  .site-card:hover {
+    transform: none;
+    box-shadow: var(--glass-shadow);
+  }
+  
+  .site-card:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  
+  .category-tab:hover {
+    transform: none;
+  }
+  
+  .category-tab:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+  
+  /* 增大触摸目标 */
+  .site-card {
+    min-height: 44px;
+  }
+  
+  .category-tab {
+    min-height: 44px;
+  }
+  
+  .btn-primary {
+    min-height: 44px;
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+/* iOS 安全区域适配 */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .ip-card {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* 优化移动端滚动 */
+.sites-grid,
+.categories-sidebar {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 隐藏移动端滚动条但保持功能 */
+@media (max-width: 768px) {
+  .categories-sidebar::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  .categories-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .categories-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.3);
+    border-radius: 2px;
+  }
+}
+
+/* 快捷键提示（桌面端显示） */
+.keyboard-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  margin-left: 0.5rem;
+}
+
+/* 移动端隐藏快捷键提示 */
+@media (max-width: 768px) {
+  .keyboard-hint {
+    display: none;
+  }
+}
+
+/* 暗色模式快捷键提示 */
+.dark-mode .keyboard-hint {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 焦点可见性优化 */
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* 减少不必要的装饰 */
+@media (max-width: 600px) {
+  .glass-effect:hover {
+    transform: none;
+  }
+}

@@ -442,7 +442,45 @@ document.addEventListener('DOMContentLoaded', () => {
     setupInfiniteScroll();
     loadIpInfo();
     registerServiceWorker();
+    setupKeyboardShortcuts();
 });
+
+// ==================== 快捷键 ====================
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+K 或 Cmd+K 聚焦搜索框
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+
+        // Esc 键失焦并关闭建议
+        if (e.key === 'Escape') {
+            const searchInput = document.getElementById('searchInput');
+            const suggestions = document.getElementById('searchSuggestions');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            if (suggestions) {
+                suggestions.classList.remove('active');
+            }
+        }
+
+        // / 键快速搜索（不在输入框时）
+        if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+    });
+}
 
 // ==================== 暗色模式 ====================
 

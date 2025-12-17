@@ -58,6 +58,19 @@ function injectDataManagement() {
                         <div id="importMsg" class="password-msg" style="margin-top: 1rem;"></div>
                     </div>
                     <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 2rem 0;">
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem; color: white;">📚 书签导入</h3>
+                        <p style="color: rgba(255,255,255,0.7); margin-bottom: 1rem;">
+                            从浏览器导出的书签 HTML 文件批量导入站点。<br>
+                            <small>支持 Chrome、Firefox、Edge 等浏览器导出的书签文件</small>
+                        </p>
+                        <input type="file" id="bookmarkFile" accept=".html,.htm" style="display: none;" onchange="handleBookmarkImport(event)">
+                        <button class="btn-primary" onclick="document.getElementById('bookmarkFile').click()">
+                            <span>📁 选择书签文件</span>
+                        </button>
+                        <div id="bookmarkMsg" class="password-msg" style="margin-top: 1rem;"></div>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.2); margin: 2rem 0;">
                     <div class="form-group">
                         <h3 style="margin-bottom: 1rem; color: white;">🖼️ 图标缓存</h3>
                         <p style="color: rgba(255,255,255,0.7); margin-bottom: 1rem;">
@@ -176,4 +189,46 @@ async function cacheAllLogos() {
 
     btn.disabled = false;
     btn.innerHTML = '<span>📥 缓存所有图标</span>';
+}
+
+// 书签导入
+async function handleBookmarkImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const msgEl = document.getElementById('bookmarkMsg');
+
+    if (!confirm('确定要导入书签吗？这将添加新的分类和站点（不会覆盖现有数据）。')) {
+        event.target.value = '';
+        return;
+    }
+
+    msgEl.textContent = '正在解析书签文件...';
+    msgEl.className = 'password-msg';
+
+    try {
+        const text = await file.text();
+
+        const response = await fetch('/api/import/bookmarks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/html' },
+            body: text
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            msgEl.textContent = result.message;
+            msgEl.className = 'password-msg success';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            msgEl.textContent = result.message || '导入失败';
+            msgEl.className = 'password-msg error';
+        }
+    } catch (error) {
+        msgEl.textContent = '导入失败: ' + error.message;
+        msgEl.className = 'password-msg error';
+    }
+
+    event.target.value = '';
 }
