@@ -80,6 +80,17 @@ async function cacheRemoteImage(imageUrl) {
 // 尝试下载单个图片
 async function tryDownloadImage(imageUrl) {
     try {
+        // 使用 URL 的 MD5 哈希作为文件名，避免重复下载
+        const urlHash = crypto.createHash('md5').update(imageUrl).digest('hex');
+
+        // 检查是否已存在该哈希的文件（忽略扩展名）
+        const existingFiles = fs.readdirSync(uploadsDir);
+        const existingFile = existingFiles.find(f => f.startsWith(urlHash));
+        if (existingFile) {
+            console.log(`图片已存在(跳过下载): ${imageUrl} -> /api/images/${existingFile}`);
+            return `/api/images/${existingFile}`;
+        }
+
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
 
@@ -98,19 +109,16 @@ async function tryDownloadImage(imageUrl) {
         }
 
         const contentType = response.headers.get('Content-Type') || '';
-        // 允许更多类型，有些服务器返回错误的 Content-Type
         if (!contentType.includes('image') && !contentType.includes('octet-stream')) {
             return null;
         }
 
         const buffer = Buffer.from(await response.arrayBuffer());
 
-        // 验证图片大小（至少 100 字节，最大 500KB）
         if (buffer.length < 100 || buffer.length > 500 * 1024) {
             return null;
         }
 
-        // 根据 Content-Type 确定文件扩展名
         const extMap = {
             'image/jpeg': '.jpg',
             'image/png': '.png',
@@ -121,14 +129,14 @@ async function tryDownloadImage(imageUrl) {
             'image/vnd.microsoft.icon': '.ico'
         };
         const ext = extMap[contentType] || '.ico';
-        const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext}`;
+        // 文件名格式: MD5哈希.扩展名
+        const filename = `${urlHash}${ext}`;
         const filePath = path.join(uploadsDir, filename);
 
         fs.writeFileSync(filePath, buffer);
         console.log(`图片已缓存: ${imageUrl} -> /api/images/${filename}`);
         return `/api/images/${filename}`;
     } catch (error) {
-        // 静默失败，不打印错误
         return null;
     }
 }
@@ -689,5 +697,5 @@ app.get('*', (req, res) => {
 
 // 启动服务
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Nav Dashboard 运行在 http://localhost:${PORT}`);
+    console.log(`🚀 Nav Dashboard v1.1.0 运行在 http://localhost:${PORT}`);
 });
