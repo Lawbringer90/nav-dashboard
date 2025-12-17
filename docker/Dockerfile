@@ -23,15 +23,15 @@ COPY package*.json ./
 COPY server ./server
 COPY public ./public
 
-# 创建数据目录并设置权限
-RUN mkdir -p /app/data /app/uploads && chmod 777 /app/uploads /app/data
+# 创建数据目录并设置权限，安装 curl 用于健康检查
+RUN mkdir -p /app/data /app/uploads && chmod 777 /app/uploads /app/data && apk add --no-cache curl
 
 # 暴露端口
 EXPOSE 3000
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD wget -q --tries=1 --spider http://localhost:3000/ || exit 1
+    CMD curl -f http://localhost:3000/ || exit 1
 
 # 启动命令
 CMD ["node", "server/index.js"]
