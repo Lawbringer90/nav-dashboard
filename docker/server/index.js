@@ -222,11 +222,19 @@ app.post('/api/sites', async (req, res) => {
         return res.status(400).json({ success: false, message: '站点名称和URL为必填项' });
     }
 
-    // 缓存远程 logo 到本地
-    const cachedLogo = await cacheRemoteImage(logo);
+    // 不再自动缓存，直接使用提供的 logo 或默认 Google Favicon
+    let siteLogo = logo;
+    if (!siteLogo) {
+        try {
+            const domain = new URL(url).hostname;
+            siteLogo = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+        } catch (e) {
+            siteLogo = '';
+        }
+    }
 
     const stmt = db.prepare(`INSERT INTO sites (name, url, description, logo, category_id, sort_order) VALUES (?, ?, ?, ?, ?, ?)`);
-    const result = stmt.run(name, url, description || '', cachedLogo || '', category_id || null, sort_order || 0);
+    const result = stmt.run(name, url, description || '', siteLogo, category_id || null, sort_order || 0);
     res.json({ success: true, message: '站点创建成功', data: { id: result.lastInsertRowid } });
 });
 
@@ -236,11 +244,19 @@ app.put('/api/sites/:id', async (req, res) => {
         return res.status(400).json({ success: false, message: '站点名称和URL为必填项' });
     }
 
-    // 缓存远程 logo 到本地
-    const cachedLogo = await cacheRemoteImage(logo);
+    // 不再自动缓存
+    let siteLogo = logo;
+    if (!siteLogo) {
+        try {
+            const domain = new URL(url).hostname;
+            siteLogo = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+        } catch (e) {
+            siteLogo = '';
+        }
+    }
 
     const stmt = db.prepare(`UPDATE sites SET name=?, url=?, description=?, logo=?, category_id=?, sort_order=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`);
-    const result = stmt.run(name, url, description || '', cachedLogo || '', category_id || null, sort_order || 0, req.params.id);
+    const result = stmt.run(name, url, description || '', siteLogo, category_id || null, sort_order || 0, req.params.id);
     if (result.changes === 0) {
         return res.status(404).json({ success: false, message: '站点不存在' });
     }
@@ -268,6 +284,38 @@ app.post('/api/sites/reorder', (req, res) => {
     });
     updateMany(order);
     res.json({ success: true, message: '排序更新成功' });
+});
+
+// --- 恢复为网络图标 (Google Favicon) ---
+app.post('/api/sites/restore-remote-logos', async (req, res) => {
+    try {
+        const sites = db.prepare(`SELECT id, name, url FROM sites`).all();
+        let updated = 0;
+        let failed = 0;
+        const updateStmt = db.prepare('UPDATE sites SET logo = ? WHERE id = ?');
+
+        for (const site of sites) {
+            try {
+                const domain = new URL(site.url).hostname;
+                const newLogo = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+                updateStmt.run(newLogo, site.id);
+                updated++;
+            } catch (e) {
+                console.error(`重置图标失败 [${site.name}]:`, e.message);
+                failed++;
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `图标重置完成: ${updated} 个已恢复为网络图标`,
+            updated,
+            failed,
+            total: sites.length
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: '重置失败: ' + error.message });
+    }
 });
 
 // --- 批量缓存所有站点图标 ---
