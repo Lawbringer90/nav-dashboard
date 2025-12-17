@@ -137,6 +137,7 @@ async function tryDownloadImage(imageUrl) {
         console.log(`图片已缓存: ${imageUrl} -> /api/images/${filename}`);
         return `/api/images/${filename}`;
     } catch (error) {
+        console.error(`图片下载/保存失败 [${imageUrl}]:`, error.message);
         return null;
     }
 }
