@@ -6,12 +6,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>导航站</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=9">
+  <link rel="stylesheet" href="/css/style.css?v=10">
 </head>
 
 <body>
   <!-- 暗色模式切换 -->
   <button id="themeToggle" class="theme-toggle" title="切换主题">🌙</button>
+  <!-- 编辑模式切换 -->
+  <button id="editModeToggle" class="edit-mode-toggle" title="编辑排序">🔒</button>
+
+  <!-- 密码验证弹窗 -->
+  <div id="passwordModal" class="password-modal" style="display: none;">
+    <div class="password-modal-content glass-effect">
+      <h3>🔐 解锁编辑模式</h3>
+      <p>输入管理密码以启用拖拽排序</p>
+      <input type="password" id="editPassword" placeholder="请输入密码" autocomplete="off">
+      <div class="password-modal-btns">
+        <button id="passwordCancelBtn" class="btn-secondary">取消</button>
+        <button id="passwordConfirmBtn" class="btn-primary">确认</button>
+      </div>
+      <div id="passwordError" class="password-error"></div>
+    </div>
+  </div>
 
   <div class="container">
 
@@ -108,7 +124,7 @@
     </div>
   </div>
 
-  <script src="/js/main.js?v=2"></script>
+  <script src="/js/main.js?v=3"></script>
 </body>
 
 </html>

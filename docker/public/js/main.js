@@ -247,6 +247,7 @@ function createSiteCard(site) {
     card.href = site.url;
     card.target = '_blank';
     card.className = 'site-card glass-effect';
+    card.dataset.siteId = site.id; // 添加站点ID用于拖拽排序
 
     card.innerHTML = `
         <div class="logo-wrapper">
@@ -620,3 +621,251 @@ function closeIpCard() {
 
 // 暴露给全局以便HTML调用
 window.closeIpCard = closeIpCard;
+
+// ==================== 编辑模式 ====================
+
+let isEditMode = false;
+let draggedCard = null;
+let allSitesData = []; // 存储所有站点数据用于排序
+
+// 初始化编辑模式
+function initEditMode() {
+    const editToggle = document.getElementById('editModeToggle');
+    const passwordModal = document.getElementById('passwordModal');
+    const passwordInput = document.getElementById('editPassword');
+    const confirmBtn = document.getElementById('passwordConfirmBtn');
+    const cancelBtn = document.getElementById('passwordCancelBtn');
+    const passwordError = document.getElementById('passwordError');
+
+    if (!editToggle) return;
+
+    // 检查是否已解锁（sessionStorage）
+    if (sessionStorage.getItem('editModeUnlocked') === 'true') {
+        enableEditMode();
+    }
+
+    // 点击编辑按钮
+    editToggle.addEventListener('click', () => {
+        if (isEditMode) {
+            disableEditMode();
+        } else {
+            // 检查是否已解锁
+            if (sessionStorage.getItem('editModeUnlocked') === 'true') {
+                enableEditMode();
+            } else {
+                passwordModal.style.display = 'flex';
+                passwordInput.focus();
+                passwordError.textContent = '';
+            }
+        }
+    });
+
+    // 确认密码
+    confirmBtn.addEventListener('click', verifyEditPassword);
+    passwordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') verifyEditPassword();
+    });
+
+    // 取消
+    cancelBtn.addEventListener('click', () => {
+        passwordModal.style.display = 'none';
+        passwordInput.value = '';
+        passwordError.textContent = '';
+    });
+
+    // 点击遮罩关闭
+    passwordModal.addEventListener('click', (e) => {
+        if (e.target === passwordModal) {
+            passwordModal.style.display = 'none';
+            passwordInput.value = '';
+        }
+    });
+}
+
+// 验证密码
+async function verifyEditPassword() {
+    const passwordInput = document.getElementById('editPassword');
+    const passwordError = document.getElementById('passwordError');
+    const passwordModal = document.getElementById('passwordModal');
+
+    try {
+        const response = await fetch(`${API_BASE}/api/auth/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: passwordInput.value })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            sessionStorage.setItem('editModeUnlocked', 'true');
+            passwordModal.style.display = 'none';
+            passwordInput.value = '';
+            enableEditMode();
+        } else {
+            passwordError.textContent = result.error || '密码错误';
+            passwordInput.select();
+        }
+    } catch (error) {
+        passwordError.textContent = '验证失败，请重试';
+    }
+}
+
+// 启用编辑模式
+function enableEditMode() {
+    isEditMode = true;
+    document.body.classList.add('edit-mode');
+    document.getElementById('editModeToggle').textContent = '🔓';
+    document.getElementById('editModeToggle').classList.add('active');
+    document.getElementById('editModeToggle').title = '点击退出编辑模式';
+
+    // 为所有站点卡片添加拖拽事件
+    setupDragAndDrop();
+}
+
+// 禁用编辑模式
+function disableEditMode() {
+    isEditMode = false;
+    document.body.classList.remove('edit-mode');
+    document.getElementById('editModeToggle').textContent = '🔒';
+    document.getElementById('editModeToggle').classList.remove('active');
+    document.getElementById('editModeToggle').title = '编辑排序';
+
+    // 移除拖拽事件
+    removeDragAndDrop();
+}
+
+// 设置拖拽事件
+function setupDragAndDrop() {
+    const container = document.getElementById('sitesGrid');
+    const cards = container.querySelectorAll('.site-card');
+
+    cards.forEach(card => {
+        card.setAttribute('draggable', 'true');
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        card.addEventListener('dragover', handleDragOver);
+        card.addEventListener('dragleave', handleDragLeave);
+        card.addEventListener('drop', handleDrop);
+
+        // 阻止点击跳转
+        card.addEventListener('click', preventClickInEditMode);
+    });
+}
+
+// 移除拖拽事件
+function removeDragAndDrop() {
+    const container = document.getElementById('sitesGrid');
+    const cards = container.querySelectorAll('.site-card');
+
+    cards.forEach(card => {
+        card.removeAttribute('draggable');
+        card.removeEventListener('dragstart', handleDragStart);
+        card.removeEventListener('dragend', handleDragEnd);
+        card.removeEventListener('dragover', handleDragOver);
+        card.removeEventListener('dragleave', handleDragLeave);
+        card.removeEventListener('drop', handleDrop);
+        card.removeEventListener('click', preventClickInEditMode);
+    });
+}
+
+// 阻止编辑模式下的点击跳转
+function preventClickInEditMode(e) {
+    if (isEditMode) {
+        e.preventDefault();
+    }
+}
+
+// 拖拽开始
+function handleDragStart(e) {
+    draggedCard = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+// 拖拽结束
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.site-card').forEach(card => {
+        card.classList.remove('drag-over');
+    });
+    draggedCard = null;
+}
+
+// 拖拽经过
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+
+    if (this !== draggedCard) {
+        this.classList.add('drag-over');
+    }
+    return false;
+}
+
+// 拖拽离开
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+// 放下
+async function handleDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (draggedCard !== this) {
+        const container = document.getElementById('sitesGrid');
+        const cards = Array.from(container.querySelectorAll('.site-card'));
+        const draggedIndex = cards.indexOf(draggedCard);
+        const targetIndex = cards.indexOf(this);
+
+        // 交换位置
+        if (draggedIndex < targetIndex) {
+            this.parentNode.insertBefore(draggedCard, this.nextSibling);
+        } else {
+            this.parentNode.insertBefore(draggedCard, this);
+        }
+
+        // 保存新顺序
+        await saveNewOrder();
+    }
+
+    this.classList.remove('drag-over');
+    return false;
+}
+
+// 保存新顺序到服务器
+async function saveNewOrder() {
+    const container = document.getElementById('sitesGrid');
+    const cards = Array.from(container.querySelectorAll('.site-card'));
+
+    const order = cards.map((card, index) => ({
+        id: parseInt(card.dataset.siteId),
+        sort_order: index
+    })).filter(item => !isNaN(item.id));
+
+    if (order.length === 0) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/api/sites/reorder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order })
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+            console.error('排序保存失败:', result.message);
+        }
+    } catch (error) {
+        console.error('排序保存失败:', error);
+    }
+}
+
+// 在初始化时调用
+document.addEventListener('DOMContentLoaded', () => {
+    initEditMode();
+});
