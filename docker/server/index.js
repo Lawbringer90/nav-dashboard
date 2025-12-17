@@ -73,8 +73,26 @@ async function cacheRemoteImage(imageUrl) {
         }
     }
 
-    // 普通图片 URL，直接下载
-    return await tryDownloadImage(imageUrl) || imageUrl;
+    // 普通图片 URL，先尝试直接下载
+    const directResult = await tryDownloadImage(imageUrl);
+    if (directResult) return directResult;
+
+    // 降级策略：如果直接下载失败（如 403），尝试使用 Google Favicon API
+    // 仅当原 URL 不是 Google API 时才尝试，避免死循环
+    if (!imageUrl.includes('google.com/s2/favicons')) {
+        try {
+            const urlObj = new URL(imageUrl); // 重新解析，确保安全
+            const domain = urlObj.hostname;
+            console.log(`直接下载失败，尝试使用 Google Favicon 服务: ${domain}`);
+            const fallbackUrl = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+            const fallbackResult = await tryDownloadImage(fallbackUrl);
+            if (fallbackResult) return fallbackResult;
+        } catch (e) {
+            // 忽略 URL 解析错误
+        }
+    }
+
+    return imageUrl; // 最终还是失败，返回原 URL
 }
 
 // 尝试下载单个图片
