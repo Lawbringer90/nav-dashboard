@@ -189,7 +189,7 @@
                         <span>密码设置</span>
                     </button>
                     <button class="nav-item" data-tab="backup">
-                        <span></span>
+                        <span>☁️</span>
                         <span>云端备份</span>
                     </button>
                 </nav>
@@ -395,11 +395,13 @@
                                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">WebDAV 配置</h3>
                                 <div class="form-group">
                                     <label>WebDAV 地址</label>
-                                    <input type="url" id="webdavUrl" class="form-input" placeholder="https://dav.jianguoyun.com/dav/">
+                                    <input type="url" id="webdavUrl" class="form-input"
+                                        placeholder="https://dav.jianguoyun.com/dav/">
                                 </div>
                                 <div class="form-group">
                                     <label>用户名</label>
-                                    <input type="text" id="webdavUsername" class="form-input" placeholder="your@email.com">
+                                    <input type="text" id="webdavUsername" class="form-input"
+                                        placeholder="your@email.com">
                                 </div>
                                 <div class="form-group">
                                     <label>密码/应用密码</label>
@@ -418,7 +420,9 @@
                                     <button id="saveBackupConfigBtn" class="btn-primary"> 保存配置</button>
                                 </div>
                                 <div id="backupMsg" class="password-msg" style="display:none; margin-top: 1rem;"></div>
-                                <div id="lastBackupStatus" style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.9rem;"></div>
+                                <div id="lastBackupStatus"
+                                    style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.9rem;">
+                                </div>
                             </div>
                             <div>
                                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">备份操作</h3>
@@ -428,7 +432,8 @@
                                 </div>
                                 <h4 style="margin: 1rem 0 0.5rem; font-size: 0.95rem;">云端备份文件</h4>
                                 <div id="backupList" style="max-height: 300px; overflow-y: auto;">
-                                    <div style="text-align:center; padding:1rem; opacity:0.7;">请先配置 WebDAV 并点击"刷新列表"</div>
+                                    <div style="text-align:center; padding:1rem; opacity:0.7;">请先配置 WebDAV 并点击"刷新列表"
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -632,7 +637,7 @@
                 }
             } catch (error) {
                 msgEl.textContent = '网络错误，请重试';
-                msgEl.className = 'password-msg error';
+                msgEl.sName =ord-msg error';
             }
         });
     </script>
@@ -643,4 +648,3 @@
 </body>
 
 </html>
-
