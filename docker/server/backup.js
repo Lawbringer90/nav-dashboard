@@ -150,8 +150,57 @@ async function performBackup(db) {
     const now = new Date().toISOString();
     updateBackupStatus(db, 'success', now);
 
+    // 清理超过7天的旧备份
+    try {
+        await cleanupOldBackups(client, 7);
+    } catch (cleanupError) {
+        console.warn('清理旧备份失败:', cleanupError.message);
+    }
+
     console.log(`备份成功: ${filename}`);
     return { success: true, filename, time: now };
+}
+
+// 清理超过指定天数的旧备份
+async function cleanupOldBackups(client, keepDays = 7) {
+    const backupDir = '/nav-backup';
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - keepDays);
+    const cutoffStr = cutoffDate.toISOString().split('T')[0].replace(/-/g, '');
+
+    // 获取备份目录和根目录的文件
+    const dirsToCheck = [backupDir, '/'];
+    let deletedCount = 0;
+
+    for (const dir of dirsToCheck) {
+        try {
+            const items = await client.getDirectoryContents(dir);
+            const fileList = Array.isArray(items) ? items : (items.data || []);
+
+            for (const item of fileList) {
+                if (item.basename && item.basename.startsWith('nav-dashboard-backup-') && item.basename.endsWith('.json')) {
+                    // 从文件名提取日期 nav-dashboard-backup-YYYYMMDD.json
+                    const match = item.basename.match(/nav-dashboard-backup-(\d{8})\.json/);
+                    if (match && match[1] < cutoffStr) {
+                        const filePath = dir === '/' ? `/${item.basename}` : `${dir}/${item.basename}`;
+                        try {
+                            await client.deleteFile(filePath);
+                            console.log(`删除旧备份: ${filePath}`);
+                            deletedCount++;
+                        } catch (delError) {
+                            console.warn(`删除 ${filePath} 失败:`, delError.message);
+                        }
+                    }
+                }
+            }
+        } catch (listError) {
+            // 目录不存在或无法访问，跳过
+        }
+    }
+
+    if (deletedCount > 0) {
+        console.log(`已清理 ${deletedCount} 个旧备份文件`);
+    }
 }
 
 // 从 WebDAV 获取备份文件列表
