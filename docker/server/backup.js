@@ -3,11 +3,20 @@
  * 支持定时自动备份和手动备份/恢复
  */
 
-const { createClient } = require('webdav');
 const cron = require('node-cron');
 
 let webdavClient = null;
 let cronJob = null;
+let createClientFn = null;
+
+// 动态导入 webdav (ESM 模块)
+async function getWebDAVClient() {
+    if (!createClientFn) {
+        const webdav = await import('webdav');
+        createClientFn = webdav.createClient;
+    }
+    return createClientFn;
+}
 
 // 获取备份配置
 function getBackupConfig(db) {
@@ -50,8 +59,9 @@ function updateBackupStatus(db, status, time = null) {
 }
 
 // 创建 WebDAV 客户端
-function createWebDAVClient(url, username, password) {
+async function createWebDAVClient(url, username, password) {
     try {
+        const createClient = await getWebDAVClient();
         webdavClient = createClient(url, {
             username,
             password
@@ -93,7 +103,7 @@ async function performBackup(db) {
     }
 
     // 创建客户端
-    const client = createWebDAVClient(config.webdav_url, config.webdav_username, config.webdav_password);
+    const client = await createWebDAVClient(config.webdav_url, config.webdav_username, config.webdav_password);
     if (!client) {
         throw new Error('无法创建 WebDAV 客户端');
     }
@@ -128,7 +138,7 @@ async function listBackups(db) {
         throw new Error('WebDAV 配置不完整');
     }
 
-    const client = createWebDAVClient(config.webdav_url, config.webdav_username, config.webdav_password);
+    const client = await createWebDAVClient(config.webdav_url, config.webdav_username, config.webdav_password);
     if (!client) {
         throw new Error('无法创建 WebDAV 客户端');
     }
@@ -157,7 +167,7 @@ async function restoreBackup(db, filename) {
         throw new Error('WebDAV 配置不完整');
     }
 
-    const client = createWebDAVClient(config.webdav_url, config.webdav_username, config.webdav_password);
+    const client = await createWebDAVClient(config.webdav_url, config.webdav_username, config.webdav_password);
     if (!client) {
         throw new Error('无法创建 WebDAV 客户端');
     }
@@ -247,6 +257,7 @@ function setupScheduledBackup(db) {
 // 测试 WebDAV 连接
 async function testConnection(url, username, password) {
     try {
+        const createClient = await getWebDAVClient();
         const client = createClient(url, { username, password });
         await client.getDirectoryContents('/');
         return { success: true };
