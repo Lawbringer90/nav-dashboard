@@ -708,6 +708,7 @@ body {
     transform: translateY(150%);
   }
 }
+
 /* ==================== 搜索建议下拉 ==================== */
 .search-input-wrapper {
   position: relative;
@@ -728,7 +729,7 @@ body {
   max-height: 300px;
   overflow-y: auto;
   display: none;
-  z-index: 1000;
+  z-index: 99999;
 }
 
 .search-suggestions.active {
@@ -840,8 +841,8 @@ body {
   transition: var(--transition);
 }
 
-.search-input:focus + .search-label,
-.search-input:not(:placeholder-shown) + .search-label {
+.search-input:focus+.search-label,
+.search-input:not(:placeholder-shown)+.search-label {
   top: -8px;
   left: -4px;
   font-size: 0.7rem;
@@ -858,13 +859,13 @@ body {
     padding-right: 0.3rem;
     margin-right: 0.3rem;
   }
-  
+
   .engine-btn {
     width: 24px;
     height: 24px;
     padding: 2px;
   }
-  
+
   .search-label {
     font-size: 0.8rem;
   }
@@ -880,6 +881,7 @@ body {
     transform: translateY(100px) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -897,7 +899,7 @@ body {
   color: var(--text-muted);
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px dashed rgba(0,0,0,0.1);
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
 }
 
 .ip-content-compact {
@@ -925,13 +927,27 @@ body {
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
 }
 
 /* 天气区域 */
@@ -940,7 +956,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
 }
@@ -951,8 +967,15 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .weather-temp {
@@ -982,7 +1005,7 @@ body {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, rgba(255,255,255,0.3) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.3) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 25%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.3) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s infinite;
 }
@@ -991,19 +1014,31 @@ body {
   flex: 1;
   height: 14px;
   border-radius: 4px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.3) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.3) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 25%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.3) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s infinite;
 }
 
 @keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes skeleton-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* ==================== 暗色模式 ==================== */
@@ -1073,10 +1108,11 @@ body {
 }
 
 /* 暗色模式 - 侧边栏 */
-.dark-mode .sidebar { background: transparent; }
+.dark-mode .sidebar {
+  background: transparent;
+}
 
-.dark-mode
-.dark-mode .category-tab {
+.dark-mode .dark-mode .category-tab {
   background: rgba(30, 41, 59, 0.6);
   color: #e2e8f0;
 }
@@ -1153,14 +1189,21 @@ body {
 }
 
 @keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  to { 
-    opacity: 0; 
-    transform: scale(0.95); 
+  to {
+    opacity: 0;
+    transform: scale(0.95);
   }
 }
 
@@ -1262,12 +1305,16 @@ body {
 }
 
 @keyframes bounce {
-  0%, 80%, 100% { 
-    transform: scale(0.6); 
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
     opacity: 0.4;
   }
-  40% { 
-    transform: scale(1); 
+
+  40% {
+    transform: scale(1);
     opacity: 1;
   }
 }
@@ -1281,35 +1328,36 @@ body {
 
 /* 触摸设备优化 */
 @media (hover: none) and (pointer: coarse) {
+
   /* 移除 hover 效果，改用 active 反馈 */
   .site-card:hover {
     transform: none;
     box-shadow: var(--glass-shadow);
   }
-  
+
   .site-card:active {
     transform: scale(0.98);
     opacity: 0.9;
   }
-  
+
   .category-tab:hover {
     transform: none;
   }
-  
+
   .category-tab:active {
     transform: scale(0.97);
     opacity: 0.85;
   }
-  
+
   /* 增大触摸目标 */
   .site-card {
     min-height: 44px;
   }
-  
+
   .category-tab {
     min-height: 44px;
   }
-  
+
   .btn-primary {
     min-height: 44px;
     padding: 0.75rem 1.5rem;
@@ -1323,7 +1371,7 @@ body {
     padding-right: env(safe-area-inset-right);
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   .ip-card {
     bottom: calc(1rem + env(safe-area-inset-bottom));
   }
@@ -1341,11 +1389,11 @@ body {
   .categories-sidebar::-webkit-scrollbar {
     height: 3px;
   }
-  
+
   .categories-sidebar::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .categories-sidebar::-webkit-scrollbar-thumb {
     background: rgba(167, 139, 250, 0.3);
     border-radius: 2px;

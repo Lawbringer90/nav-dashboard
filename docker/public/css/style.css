@@ -729,7 +729,7 @@ body {
   max-height: 300px;
   overflow-y: auto;
   display: none;
-  z-index: 1000;
+  z-index: 99999;
 }
 
 .search-suggestions.active {
