@@ -234,14 +234,12 @@ function renderSites(sites, append = false) {
     });
 }
 
+// 默认图标路径
+const DEFAULT_ICON = '/default-icon.png';
+
 // 创建站点卡片（优化图片加载）
 function createSiteCard(site) {
-    const logo = site.logo || '';
-
-    // 如果没有logo，不创建卡片
-    if (!logo) {
-        return null;
-    }
+    const logo = site.logo || DEFAULT_ICON;
 
     const card = document.createElement('a');
     card.href = site.url;
@@ -273,7 +271,14 @@ function setupLazyLoad() {
                     const img = entry.target;
                     img.src = img.dataset.src;
                     img.onload = () => img.classList.add('loaded');
-                    img.onerror = () => img.parentElement.classList.add('fallback');
+                    img.onerror = () => {
+                        // 加载失败时使用默认图标
+                        if (img.src !== DEFAULT_ICON) {
+                            img.src = DEFAULT_ICON;
+                        } else {
+                            img.parentElement.classList.add('fallback');
+                        }
+                    };
                     imageObserver.unobserve(img);
                 }
             });
