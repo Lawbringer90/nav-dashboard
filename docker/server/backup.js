@@ -112,15 +112,39 @@ async function performBackup(db) {
     const data = exportData(db);
     const jsonContent = JSON.stringify(data, null, 2);
 
+    // 备份目录
+    const backupDir = '/nav-backup';
+
+    // 尝试创建备份目录（如果不存在）
+    try {
+        const dirExists = await client.exists(backupDir);
+        if (!dirExists) {
+            await client.createDirectory(backupDir);
+            console.log(`创建备份目录: ${backupDir}`);
+        }
+    } catch (dirError) {
+        console.warn('检查/创建目录失败，尝试直接上传:', dirError.message);
+    }
+
     // 文件名：nav-dashboard-backup-YYYYMMDD.json
     const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
     const filename = `nav-dashboard-backup-${date}.json`;
+    const filePath = `${backupDir}/${filename}`;
 
-    // 上传到 WebDAV
-    await client.putFileContents(`/${filename}`, jsonContent, {
-        contentLength: Buffer.byteLength(jsonContent, 'utf8'),
-        overwrite: true
-    });
+    try {
+        // 尝试上传到备份目录
+        await client.putFileContents(filePath, jsonContent, {
+            contentLength: Buffer.byteLength(jsonContent, 'utf8'),
+            overwrite: true
+        });
+    } catch (uploadError) {
+        // 如果备份目录失败，尝试直接上传到根目录
+        console.warn(`上传到 ${filePath} 失败，尝试根目录:`, uploadError.message);
+        await client.putFileContents(`/${filename}`, jsonContent, {
+            contentLength: Buffer.byteLength(jsonContent, 'utf8'),
+            overwrite: true
+        });
+    }
 
     // 更新状态
     const now = new Date().toISOString();
@@ -143,24 +167,42 @@ async function listBackups(db) {
         throw new Error('无法创建 WebDAV 客户端');
     }
 
-    // 列出目录内容
-    const items = await client.getDirectoryContents('/');
+    const allBackups = [];
+    const backupDir = '/nav-backup';
 
-    // 过滤出备份文件
-    const backups = items
-        .filter(item => item.basename.startsWith('nav-dashboard-backup-') && item.basename.endsWith('.json'))
-        .map(item => ({
-            filename: item.basename,
-            size: item.size,
-            lastModified: item.lastmod
-        }))
-        .sort((a, b) => b.filename.localeCompare(a.filename)); // 按文件名倒序
+    // 辅助函数：从目录获取备份文件
+    async function getBackupsFromDir(dir) {
+        try {
+            const items = await client.getDirectoryContents(dir);
+            const fileList = Array.isArray(items) ? items : (items.data || []);
+            return fileList
+                .filter(item => item.basename && item.basename.startsWith('nav-dashboard-backup-') && item.basename.endsWith('.json'))
+                .map(item => ({
+                    filename: item.basename,
+                    size: item.size || 0,
+                    lastModified: item.lastmod || '',
+                    path: dir === '/' ? `/${item.basename}` : `${dir}/${item.basename}`
+                }));
+        } catch (error) {
+            console.warn(`列出目录 ${dir} 失败:`, error.message);
+            return [];
+        }
+    }
 
-    return backups;
+    // 从备份目录获取
+    const backupDirFiles = await getBackupsFromDir(backupDir);
+    allBackups.push(...backupDirFiles);
+
+    // 也从根目录获取（兼容旧备份）
+    const rootFiles = await getBackupsFromDir('/');
+    allBackups.push(...rootFiles);
+
+    // 按文件名倒序排序
+    return allBackups.sort((a, b) => b.filename.localeCompare(a.filename));
 }
 
 // 从 WebDAV 恢复数据
-async function restoreBackup(db, filename) {
+async function restoreBackup(db, filename, path = null) {
     const config = getBackupConfig(db);
 
     if (!config.webdav_url || !config.webdav_username || !config.webdav_password) {
@@ -172,8 +214,27 @@ async function restoreBackup(db, filename) {
         throw new Error('无法创建 WebDAV 客户端');
     }
 
-    // 下载文件
-    const content = await client.getFileContents(`/${filename}`, { format: 'text' });
+    // 尝试多个可能的路径
+    const pathsToTry = path ? [path] : [
+        `/nav-backup/${filename}`,
+        `/${filename}`
+    ];
+
+    let content = null;
+    for (const tryPath of pathsToTry) {
+        try {
+            content = await client.getFileContents(tryPath, { format: 'text' });
+            console.log(`成功从 ${tryPath} 读取备份`);
+            break;
+        } catch (error) {
+            console.warn(`尝试路径 ${tryPath} 失败:`, error.message);
+        }
+    }
+
+    if (!content) {
+        throw new Error('无法找到备份文件');
+    }
+
     const data = JSON.parse(content);
 
     // 验证数据格式
@@ -259,10 +320,26 @@ async function testConnection(url, username, password) {
     try {
         const createClient = await getWebDAVClient();
         const client = createClient(url, { username, password });
-        await client.getDirectoryContents('/');
-        return { success: true };
+
+        // 使用 exists 方法测试连接，比 getDirectoryContents 更简单可靠
+        const exists = await client.exists('/');
+        if (exists !== false) {
+            return { success: true };
+        }
+        return { success: false, error: '无法访问目录' };
     } catch (error) {
-        return { success: false, error: error.message };
+        // 处理常见错误
+        let errorMsg = error.message || '未知错误';
+        if (errorMsg.includes('multistatus')) {
+            // multistatus 解析错误但连接可能是正常的
+            return { success: true, warning: 'WebDAV 响应格式非标准，但连接可用' };
+        }
+        if (errorMsg.includes('401')) {
+            errorMsg = '认证失败，请检查用户名和密码';
+        } else if (errorMsg.includes('404')) {
+            errorMsg = '路径不存在，请检查 WebDAV 地址';
+        }
+        return { success: false, error: errorMsg };
     }
 }
 
