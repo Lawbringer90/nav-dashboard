@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>导航站</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=12">
+  <link rel="stylesheet" href="/css/style.css?v=13">
 </head>
 
 <body>
@@ -54,6 +54,8 @@
 
     <!-- 顶栏：搜索引擎 -->
     <header class="header-simple">
+      <!-- 时间问候 -->
+      <div id="greetingBanner" class="greeting-banner"></div>
       <div class="search-box-center glass-effect">
         <div class="search-engines">
           <button type="button" class="engine-btn active" data-engine="google" title="Google">
@@ -100,6 +102,8 @@
         <div id="categoriesList" class="categories-sidebar">
           <!-- 动态加载分类 -->
         </div>
+        <!-- 站点统计 -->
+        <div id="siteStats" class="site-stats"></div>
       </aside>
 
       <!-- 右侧内容区 -->
@@ -136,33 +140,7 @@
     </a>
   </footer>
 
-  <!-- IP Info Card -->
-  <div id="ipCard" class="ip-card glass-effect" style="display: none;">
-    <div class="ip-header">
-      <span class="ip-greeting" id="ipGreeting">👋 欢迎光临</span>
-      <button class="ip-close" onclick="closeIpCard()">×</button>
-    </div>
-    <div class="ip-stats">
-      <span id="visitCount">第 1 次访问</span>
-    </div>
-    <div class="ip-content-compact">
-      <div class="ip-info-row">
-        <span class="ip-icon bounce">📍</span>
-        <span id="ipLocation">加载中...</span>
-      </div>
-      <div class="ip-info-row">
-        <span class="ip-icon pulse">🌐</span>
-        <span id="ipAddress">...</span>
-      </div>
-    </div>
-    <div class="ip-weather" id="ipWeather">
-      <span class="weather-icon">🌤️</span>
-      <span class="weather-temp" id="weatherTemp">--°C</span>
-      <span class="weather-desc" id="weatherDesc">获取天气中...</span>
-    </div>
-  </div>
-
-  <script src="/js/main.js?v=6"></script>
+  <script src="/js/main.js?v=7"></script>
 </body>
 
 </html>
