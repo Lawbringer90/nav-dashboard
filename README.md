@@ -1,6 +1,6 @@
-# 导航站 - Cloudflare 版本
+# 导航仪表盘 NavDashboard
 
-一个基于卡片式布局的现代化导航站点，采用磨砂玻璃（Glassmorphism）设计风格，部署在 Cloudflare 无服务器平台。
+一个基于卡片式布局的现代化导航站点，采用磨砂玻璃（Glassmorphism）设计风格。支持 Cloudflare 和 Docker 两种部署方式，还有浏览器插件快速添加收藏。
 
 **🔗 在线演示**：https://nav.csee.de5.net
 
@@ -11,7 +11,6 @@
 ### 🎨 界面设计
 - **磨砂玻璃效果** - 现代化的 Glassmorphism 设计风格
 - **暖色调配色** - 温暖舒适的视觉体验
-- **🌙 暗色模式** - 一键切换明暗主题
 - **📱 响应式布局** - 完美适配各种设备
 - **骨架屏加载** - 优雅的加载体验
 
@@ -20,84 +19,173 @@
 - **实时搜索** - 快速筛选站点
 - **智能建议** - 搜索自动补全
 
-### 📊 访客信息
-- **IP 信息卡片** - 显示访客 IP 和地理位置
-- **天气显示** - 基于位置的实时天气
-- **访问统计** - 记录访问次数
-
 ### ⚙️ 管理功能
 - **站点管理** - 完整的 CRUD 功能
 - **分类管理** - 多级分类组织导航
 - **拖拽排序** - 直观的排序操作
 - **🖼️ 灵活图标** - 支持远程 URL 和本地上传
-- **🔗 Logo API** - Google / toolb.cn 双源一键获取
+- **🔗 Logo API** - 多源自动获取
 
 ### 🔒 安全特性
 - **密码哈希** - SHA-256 加密存储
-- **API 限流** - 100 次/分钟防护
+- **API 限流** - 防暴力破解
 - **Session 管理** - 安全的会话控制
 
-### ⚡ 技术特性
-- **边缘计算** - Cloudflare 全球网络加速
-- **🚀 一键部署** - GitHub Actions 自动部署
-- **PWA 支持** - Service Worker 离线缓存
+### 🧩 浏览器插件
+- **右键菜单** - 任意网页右键添加到导航站
+- **自动获取** - 自动填充标题、URL、图标
+- **分类选择** - 支持选择已有分类
+- **双版本兼容** - 同时支持 CF 版和 Docker 版
 
-## 🏗️ 技术架构
-
-- **Cloudflare Workers** - 无服务器后端 API
-- **Cloudflare D1** - SQLite 边缘数据库
-- **Cloudflare KV** - 键值存储（图片）
-- **Cloudflare Pages** - 静态站点托管
-- **原生 JavaScript** - 无框架依赖
+---
 
 ## 🚀 快速部署
 
-### 第 1 步：Fork 或克隆仓库
+### ☁️ 方式一：Cloudflare 部署（推荐）
 
-```bash
-git clone https://github.com/debbide/nav-dashboard.git
-cd nav-dashboard
+免费部署到 Cloudflare Pages，全球 CDN 加速。
+
+#### 第 1 步：Fork 仓库
+
+点击右上角 Fork 按钮，将仓库复制到你的 GitHub 账号。
+
+#### 第 2 步：创建 Cloudflare 资源
+
+登录 [Cloudflare Dashboard](https://dash.cloudflare.com)：
+
+1. **创建 D1 数据库**
+   - 进入 Workers & Pages → D1
+   - 点击 Create database
+   - 名称填 `nav-dashboard-db`
+   - 记录 Database ID
+
+2. **创建 KV 命名空间**
+   - 进入 Workers & Pages → KV
+   - 点击 Create a namespace
+   - 名称填 `nav-dashboard-kv`
+   - 记录 Namespace ID
+
+#### 第 3 步：获取 API Token
+
+1. 访问 [API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+2. 点击 Create Token
+3. 选择 **Edit Cloudflare Workers** 模板
+4. 创建并复制 Token
+
+#### 第 4 步：配置 GitHub Secrets
+
+进入你 Fork 的仓库 → Settings → Secrets and variables → Actions
+
+添加以下 4 个 Secrets：
+
+| Secret 名称 | 说明 |
+|------------|------|
+| `CLOUDFLARE_API_TOKEN` | 刚才创建的 API Token |
+| `CLOUDFLARE_ACCOUNT_ID` | Dashboard 右侧的 Account ID |
+| `D1_DATABASE_ID` | 创建的数据库 ID |
+| `KV_NAMESPACE_ID` | 创建的 KV 命名空间 ID |
+
+#### 第 5 步：运行部署
+
+1. 进入 Actions 页面
+2. 运行 **Initialize Database**（首次）
+3. 运行 **Deploy to Cloudflare**
+
+#### 第 6 步：配置 Pages 绑定
+
+> ⚠️ 首次部署后需要手动配置一次
+
+1. 进入 Cloudflare Dashboard → Pages → nav-dashboard
+2. Settings → Functions
+3. 添加 D1 绑定：Variable name = `DB`，选择对应数据库
+4. 添加 KV 绑定：Variable name = `KV`，选择对应命名空间
+
+**🎉 完成！** 访问 `https://nav-dashboard.pages.dev`
+
+---
+
+### 🐳 方式二：Docker 部署
+
+适合有自己服务器的用户，数据本地存储。
+
+#### docker-compose.yml
+
+```yaml
+services:
+  nav-dashboard:
+    image: ghcr.io/debbide/simple-nav-dashboard:latest
+    container_name: nav-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - ADMIN_PASSWORD=admin123
+      - TZ=Asia/Shanghai
 ```
 
-### 第 2 步：配置 GitHub Secrets
+#### 部署步骤
 
-访问：`设置` → `Secrets and variables` → `Actions`
+```bash
+# 创建目录
+mkdir nav-dashboard && cd nav-dashboard
 
-添加以下 **4 个 Secrets**：
+# 创建 docker-compose.yml（内容如上）
 
-| Secret 名称 | 说明 | 获取方式 |
-|------------|------|---------|
-| `CLOUDFLARE_API_TOKEN` | API 令牌 | [创建 Token](https://dash.cloudflare.com/profile/api-tokens) |
-| `CLOUDFLARE_ACCOUNT_ID` | 账户 ID | [Dashboard](https://dash.cloudflare.com) 右侧 |
-| `D1_DATABASE_ID` | D1 数据库 ID | `wrangler d1 create nav-dashboard-db` |
-| `KV_NAMESPACE_ID` | KV 命名空间 ID | `wrangler kv:namespace create nav-images` |
+# 启动
+docker-compose up -d
 
-**API Token 权限配置参考：**
+# 访问
+# 主页：http://你的IP:3000
+# 后台：http://你的IP:3000/admin.html
+```
 
-![API Token 权限配置](api-token-permissions.png)
+#### 更新升级
 
-> 💡 详细配置步骤请查看 [GITHUB_DEPLOY.md](GITHUB_DEPLOY.md)
+```bash
+docker-compose pull
+docker-compose up -d
+```
 
-### 第 3 步：初始化数据库（⚠️ 仅首次部署执行）
+---
 
-> **重要**：此步骤只需在首次部署时执行一次，后续更新无需重复！
+## 🧩 浏览器插件
 
-1. 进入 GitHub 仓库的 **Actions** 标签
-2. 选择 **Initialize Database**
-3. 点击 **Run workflow**
-4. `reset_data` 选择 `true` 可导入示例数据，选择 `false` 则只创建空表
+支持在任意网页右键快速添加到导航仪表盘。
 
-### 第 4 步：部署应用
+### 安装步骤
 
-1. 选择 **Deploy to Cloudflare**
-2. 点击 **Run workflow**
-3. 后续代码更新会自动触发部署
+1. 下载仓库中的 `chrome-extension` 文件夹
+2. 打开 Chrome 访问 `chrome://extensions/`
+3. 开启右上角「开发者模式」
+4. 点击「加载已解压的扩展程序」
+5. 选择 `chrome-extension` 文件夹
 
-### 🎉 完成！
+### 配置插件
 
-访问：`https://nav-dashboard.你的账户.workers.dev`
+1. 点击工具栏的插件图标
+2. 点击 ⚙️ 设置按钮
+3. 输入你的导航站地址：
+   - CF 版：`https://nav-dashboard.pages.dev`
+   - Docker 版：`http://你的IP:3000`
+4. 如果设置了密码，填入密码
+5. 保存并测试连接
 
-> **默认管理密码**：`admin123`（首次登录后请及时修改）
+### 使用方法
+
+**右键菜单**
+- 在任意网页空白处右键
+- 点击「添加到导航仪表盘」
+- 确认信息后点击添加
+
+**点击图标**
+- 直接点击工具栏插件图标
+- 自动填充当前页面信息
+- 选择分类后添加
+
+---
 
 ## 📂 项目结构
 
@@ -106,19 +194,14 @@ nav-dashboard/
 ├── src/
 │   └── index.js           # Workers API
 ├── public/                # 前端静态文件
-│   ├── index.html         # 主页
-│   ├── admin.html         # 管理后台
-│   ├── favicon.svg        # 网站图标
-│   ├── sw.js              # Service Worker
-│   ├── css/               # 样式文件
-│   └── js/                # 脚本文件
-├── .github/
-│   └── workflows/
-│       └── deploy.yml     # GitHub Actions
-├── schema.sql             # D1 数据库架构
-├── wrangler.toml          # Cloudflare 配置
-└── package.json
+├── docker/                # Docker 版本
+├── chrome-extension/      # 浏览器插件
+├── .github/workflows/     # GitHub Actions
+├── schema.sql             # 数据库架构
+└── wrangler.toml          # Cloudflare 配置
 ```
+
+---
 
 ## 📋 API 接口
 
@@ -129,7 +212,6 @@ nav-dashboard/
 | `POST` | `/api/sites` | 创建站点 |
 | `PUT` | `/api/sites/:id` | 更新站点 |
 | `DELETE` | `/api/sites/:id` | 删除站点 |
-| `POST` | `/api/sites/reorder` | 批量排序 |
 
 ### 分类接口
 | 方法 | 路径 | 说明 |
@@ -138,62 +220,16 @@ nav-dashboard/
 | `POST` | `/api/categories` | 创建分类 |
 | `PUT` | `/api/categories/:id` | 更新分类 |
 | `DELETE` | `/api/categories/:id` | 删除分类 |
-| `POST` | `/api/categories/reorder` | 批量排序 |
 
-### 文件接口
+### 其他接口
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `POST` | `/api/upload` | 上传图片到 KV |
-| `GET` | `/api/images/:filename` | 获取图片 |
+| `POST` | `/api/upload` | 上传图片 |
+| `POST` | `/api/auth/verify` | 验证密码 |
+| `GET` | `/api/export` | 导出数据 |
+| `POST` | `/api/import` | 导入数据 |
 
-### 设置接口
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET` | `/api/settings/background` | 获取背景设置 |
-| `POST` | `/api/settings/background` | 更新背景设置 |
-| `POST` | `/api/settings/password` | 修改管理密码 |
-| `POST` | `/api/verify-password` | 验证密码 |
-
-## 🎨 设计特色
-
-### 磨砂玻璃效果
-```css
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-```
-
-### 暖色调配色
-- 主色：`#ff9a56` 🧡
-- 辅助色：`#ffb347` 🍊
-- 渐变背景：紫色到橙色
-
-### 暗色模式
-- 自动记忆用户偏好
-- 平滑过渡动画
-- 完整的深色配色方案
-
-## 🔄 更新流程
-
-配置完成后，以后只需：
-
-```bash
-git add .
-git commit -m "更新内容"
-git push
-```
-
-GitHub Actions 会自动部署！🚀
-
-## 📚 文档
-
-- [DEPLOY.md](DEPLOY.md) - 快速部署指南
-- [GITHUB_DEPLOY.md](GITHUB_DEPLOY.md) - 详细部署文档
-- [.github/SECRETS_SETUP.md](.github/SECRETS_SETUP.md) - Secrets 配置
-- [.github/KV_SETUP.md](.github/KV_SETUP.md) - KV 存储说明
+---
 
 ## 🛠️ 本地开发
 
@@ -201,54 +237,38 @@ GitHub Actions 会自动部署！🚀
 # 安装依赖
 npm install
 
-# 本地开发
+# 本地开发（CF 版）
 npm run dev
 
-# 部署 Workers
-npm run deploy
-
-# 部署 Pages
-npm run pages:deploy
+# Docker 版开发
+cd docker
+npm run dev
 ```
 
-## 📊 数据管理
-
-### 查询数据
-```bash
-npx wrangler d1 execute nav-dashboard-db --command="SELECT * FROM sites"
-```
-
-### 备份数据
-```bash
-npx wrangler d1 export nav-dashboard-db --output=backup.sql
-```
-
-### 恢复数据
-```bash
-npx wrangler d1 execute nav-dashboard-db --file=backup.sql
-```
+---
 
 ## 🐛 故障排查
 
-### 部署失败？
+### CF 版部署失败？
 1. 检查 4 个 Secrets 是否正确配置
 2. 验证 API Token 权限
 3. 查看 Actions 日志
 
-### Pages 显示错误？
-确认已配置 D1 和 KV 绑定
+### CF 版 Pages 显示错误？
+确认已配置 D1 和 KV 绑定（第 6 步）
 
-### 图片无法上传？
-检查 KV 命名空间绑定是否正确
+### Docker 版无法访问？
+检查防火墙是否开放端口
+
+### 插件提示网络错误？
+检查 API 地址是否正确，确认导航站正在运行
+
+---
 
 ## 📄 许可证
 
 MIT License
 
-## 🙏 致谢
-
-感谢 Cloudflare 提供的强大无服务器平台！
-
 ---
 
-**现在就开始部署你的导航站吧！** ⚡🎉
+**⭐ 如果觉得不错，欢迎 Star 支持！**
