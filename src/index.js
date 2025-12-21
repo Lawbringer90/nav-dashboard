@@ -79,7 +79,9 @@ async function serveStatic(pathname, env) {
                 const dir = parts[0];
                 const fileName = parts[1].replace(/\.(css|js)$/, '');
                 const ext = parts[1].split('.').pop();
-                actualFile = files.find(f => f.match(new RegExp(`^${dir}/${fileName}\\.[a-f0-9]+\\.${ext}$`)));
+                // 转义文件名中的特殊正则字符（如 - . 等）
+                const escapedFileName = fileName.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+                actualFile = files.find(f => f.match(new RegExp(`^${dir}/${escapedFileName}\\.[a-f0-9]+\\.${ext}$`)));
             }
         } else if (requestedFile.match(/\.(png|jpg|jpeg|gif|svg|ico|webp)$/i)) {
             // 图片文件：直接查找或带哈希
