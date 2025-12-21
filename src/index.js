@@ -867,42 +867,102 @@ async function importData(request, env, headers) {
             return jsonResponse({ success: false, message: '无效的导入数据格式' }, 400, headers);
         }
 
-        // 清空现有数据
-        await env.DB.prepare('DELETE FROM sites').run();
-        await env.DB.prepare('DELETE FROM categories').run();
-        await env.DB.prepare("DELETE FROM settings WHERE key != 'admin_password'").run();
+        // 验证数据格式
+        if (!Array.isArray(data.categories) || !Array.isArray(data.sites)) {
+            return jsonResponse({ success: false, message: '无效的数据格式：categories 和 sites 必须是数组' }, 400, headers);
+        }
 
-        // 导入分类（保留原 ID 映射）
+        console.log(`开始导入: ${data.categories.length} 个分类, ${data.sites.length} 个站点`);
+
+        // 使用 D1 batch 操作实现原子性
+        const statements = [];
+
+        // 1. 清空现有数据
+        statements.push(env.DB.prepare('DELETE FROM sites'));
+        statements.push(env.DB.prepare('DELETE FROM categories'));
+        statements.push(env.DB.prepare("DELETE FROM settings WHERE key != 'admin_password'"));
+
+        // 执行清空操作
+        await env.DB.batch(statements);
+        console.log('已清空现有数据');
+
+        // 2. 导入分类（需要逐个插入以获取新 ID）
         const categoryIdMap = {};
         for (const cat of data.categories) {
-            const result = await env.DB.prepare(`
-                INSERT INTO categories (name, icon, color, sort_order) VALUES (?, ?, ?, ?)
-            `).bind(cat.name, cat.icon || '', cat.color || '#ff9a56', cat.sort_order || 0).run();
-            categoryIdMap[cat.id] = result.meta.last_row_id;
-        }
+            try {
+                const result = await env.DB.prepare(`
+                    INSERT INTO categories (name, icon, color, sort_order) VALUES (?, ?, ?, ?)
+                `).bind(
+                    cat.name || '未命名分类',
+                    cat.icon || '📁',
+                    cat.color || '#ff9a56',
+                    cat.sort_order || 0
+                ).run();
 
-        // 导入站点（映射分类 ID）
-        for (const site of data.sites) {
-            const newCategoryId = site.category_id ? categoryIdMap[site.category_id] : null;
-            await env.DB.prepare(`
-                INSERT INTO sites (name, url, description, logo, category_id, sort_order) VALUES (?, ?, ?, ?, ?, ?)
-            `).bind(site.name, site.url, site.description || '', site.logo || '', newCategoryId, site.sort_order || 0).run();
-        }
-
-        // 导入设置
-        if (data.settings) {
-            for (const setting of data.settings) {
-                await env.DB.prepare(`
-                    INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)
-                `).bind(setting.key, setting.value).run();
+                // D1 返回的是 meta.last_row_id
+                const newId = result.meta?.last_row_id;
+                if (newId) {
+                    categoryIdMap[cat.id] = newId;
+                }
+                console.log(`导入分类: ${cat.name}, 原ID: ${cat.id}, 新ID: ${newId}`);
+            } catch (catError) {
+                console.error(`导入分类失败: ${cat.name}`, catError);
             }
         }
 
+        // 3. 导入站点
+        let successCount = 0;
+        let failCount = 0;
+        for (const site of data.sites) {
+            try {
+                // 映射分类 ID
+                let newCategoryId = null;
+                if (site.category_id) {
+                    newCategoryId = categoryIdMap[site.category_id] || null;
+                }
+
+                await env.DB.prepare(`
+                    INSERT INTO sites (name, url, description, logo, category_id, sort_order) VALUES (?, ?, ?, ?, ?, ?)
+                `).bind(
+                    site.name || '未命名站点',
+                    site.url || '',
+                    site.description || '',
+                    site.logo || '',
+                    newCategoryId,
+                    site.sort_order || 0
+                ).run();
+                successCount++;
+            } catch (siteError) {
+                console.error(`导入站点失败: ${site.name}`, siteError);
+                failCount++;
+            }
+        }
+
+        // 4. 导入设置
+        if (data.settings && Array.isArray(data.settings)) {
+            for (const setting of data.settings) {
+                if (setting.key && setting.key !== 'admin_password') {
+                    try {
+                        await env.DB.prepare(`
+                            INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)
+                        `).bind(setting.key, setting.value || '').run();
+                    } catch (settingError) {
+                        console.error(`导入设置失败: ${setting.key}`, settingError);
+                    }
+                }
+            }
+        }
+
+        const message = failCount > 0
+            ? `导入完成: ${data.categories.length} 个分类, ${successCount} 个站点成功, ${failCount} 个站点失败`
+            : `导入成功: ${data.categories.length} 个分类, ${successCount} 个站点`;
+
         return jsonResponse({
             success: true,
-            message: `导入成功: ${data.categories.length} 个分类, ${data.sites.length} 个站点`
+            message: message
         }, 200, headers);
     } catch (error) {
+        console.error('导入失败:', error);
         return jsonResponse({ success: false, message: '导入失败: ' + error.message }, 500, headers);
     }
 }
