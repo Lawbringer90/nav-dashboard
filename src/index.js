@@ -241,6 +241,11 @@ async function handleAPI(request, env, pathname, corsHeaders) {
         return await importData(request, env, corsHeaders);
     }
 
+    // 书签导入 API
+    if (pathname === '/api/import/bookmarks' && method === 'POST') {
+        return await importBookmarks(request, env, corsHeaders);
+    }
+
     return jsonResponse({ success: false, message: 'API Not Found' }, 404, corsHeaders);
 }
 
@@ -965,4 +970,144 @@ async function importData(request, env, headers) {
         console.error('导入失败:', error);
         return jsonResponse({ success: false, message: '导入失败: ' + error.message }, 500, headers);
     }
+}
+
+// 书签导入
+async function importBookmarks(request, env, headers) {
+    try {
+        const html = await request.text();
+
+        if (!html || !html.includes('<DT>')) {
+            return jsonResponse({ success: false, message: '无效的书签文件格式' }, 400, headers);
+        }
+
+        // 解析书签 HTML
+        const bookmarks = parseBookmarkHtml(html);
+
+        if (bookmarks.length === 0) {
+            return jsonResponse({ success: false, message: '未找到有效的书签' }, 400, headers);
+        }
+
+        console.log(`解析到 ${bookmarks.length} 个书签`);
+
+        // 获取现有分类
+        const { results: existingCategories } = await env.DB.prepare('SELECT id, name FROM categories').all();
+        const categoryMap = {};
+        for (const cat of existingCategories) {
+            categoryMap[cat.name.toLowerCase()] = cat.id;
+        }
+
+        // 统计
+        let categoriesCreated = 0;
+        let sitesCreated = 0;
+        let sitesSkipped = 0;
+
+        // 获取现有站点 URL（去重用）
+        const { results: existingSites } = await env.DB.prepare('SELECT url FROM sites').all();
+        const existingUrls = new Set(existingSites.map(s => s.url.toLowerCase()));
+
+        // 处理书签
+        for (const bookmark of bookmarks) {
+            // 处理分类
+            let categoryId = null;
+            if (bookmark.folder) {
+                const folderLower = bookmark.folder.toLowerCase();
+                if (categoryMap[folderLower]) {
+                    categoryId = categoryMap[folderLower];
+                } else {
+                    // 创建新分类
+                    const result = await env.DB.prepare(`
+                        INSERT INTO categories (name, icon, color, sort_order) VALUES (?, ?, ?, ?)
+                    `).bind(bookmark.folder, '📁', '#a78bfa', 0).run();
+
+                    categoryId = result.meta?.last_row_id;
+                    if (categoryId) {
+                        categoryMap[folderLower] = categoryId;
+                        categoriesCreated++;
+                    }
+                }
+            }
+
+            // 跳过已存在的 URL
+            if (existingUrls.has(bookmark.url.toLowerCase())) {
+                sitesSkipped++;
+                continue;
+            }
+
+            // 创建站点
+            try {
+                const logo = `https://www.google.com/s2/favicons?sz=128&domain=${new URL(bookmark.url).hostname}`;
+                await env.DB.prepare(`
+                    INSERT INTO sites (name, url, description, logo, category_id, sort_order) VALUES (?, ?, ?, ?, ?, ?)
+                `).bind(bookmark.name, bookmark.url, '', logo, categoryId, 0).run();
+
+                existingUrls.add(bookmark.url.toLowerCase());
+                sitesCreated++;
+            } catch (siteError) {
+                console.error(`创建站点失败: ${bookmark.name}`, siteError);
+            }
+        }
+
+        return jsonResponse({
+            success: true,
+            message: `导入完成: 新建 ${categoriesCreated} 个分类, ${sitesCreated} 个站点` +
+                (sitesSkipped > 0 ? `, 跳过 ${sitesSkipped} 个重复` : '')
+        }, 200, headers);
+    } catch (error) {
+        console.error('书签导入失败:', error);
+        return jsonResponse({ success: false, message: '书签导入失败: ' + error.message }, 500, headers);
+    }
+}
+
+// 解析书签 HTML
+function parseBookmarkHtml(html) {
+    const bookmarks = [];
+    let currentFolder = null;
+
+    // 匹配文件夹
+    const folderRegex = /<DT><H3[^>]*>([^<]+)<\/H3>/gi;
+    // 匹配链接
+    const linkRegex = /<DT><A[^>]*HREF="([^"]+)"[^>]*>([^<]+)<\/A>/gi;
+
+    // 按行处理以保持文件夹上下文
+    const lines = html.split('\n');
+    let depth = 0;
+    const folderStack = [];
+
+    for (const line of lines) {
+        // 检测文件夹开始
+        const folderMatch = /<DT><H3[^>]*>([^<]+)<\/H3>/i.exec(line);
+        if (folderMatch) {
+            currentFolder = folderMatch[1].trim();
+            folderStack.push(currentFolder);
+            depth++;
+            continue;
+        }
+
+        // 检测文件夹结束
+        if (line.includes('</DL>')) {
+            folderStack.pop();
+            currentFolder = folderStack[folderStack.length - 1] || null;
+            depth = Math.max(0, depth - 1);
+            continue;
+        }
+
+        // 检测链接
+        const linkMatch = /<DT><A[^>]*HREF="([^"]+)"[^>]*>([^<]+)<\/A>/i.exec(line);
+        if (linkMatch) {
+            const url = linkMatch[1].trim();
+            const name = linkMatch[2].trim();
+
+            // 只处理 http/https 链接
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                bookmarks.push({
+                    name: name,
+                    url: url,
+                    folder: currentFolder
+                });
+            }
+        }
+    }
+
+    return bookmarks;
 }
