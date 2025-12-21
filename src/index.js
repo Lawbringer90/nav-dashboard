@@ -71,12 +71,16 @@ async function serveStatic(pathname, env) {
             const baseName = requestedFile.replace('.html', '');
             actualFile = files.find(f => f.match(new RegExp(`^${baseName}\\.[a-f0-9]+\\.html$`)));
         } else if (requestedFile.startsWith('css/') || requestedFile.startsWith('js/')) {
-            // CSS/JS 文件：css/style.*.css 或 js/main.*.js
-            const parts = requestedFile.split('/');
-            const dir = parts[0];
-            const fileName = parts[1].replace(/\.(css|js)$/, '');
-            const ext = parts[1].split('.').pop();
-            actualFile = files.find(f => f.match(new RegExp(`^${dir}/${fileName}\\.[a-f0-9]+\\.${ext}$`)));
+            // CSS/JS 文件：先尝试精确匹配，再尝试哈希匹配
+            // 例如 js/admin.js 或 js/admin.abc123.js
+            actualFile = files.find(f => f === requestedFile);
+            if (!actualFile) {
+                const parts = requestedFile.split('/');
+                const dir = parts[0];
+                const fileName = parts[1].replace(/\.(css|js)$/, '');
+                const ext = parts[1].split('.').pop();
+                actualFile = files.find(f => f.match(new RegExp(`^${dir}/${fileName}\\.[a-f0-9]+\\.${ext}$`)));
+            }
         } else if (requestedFile.match(/\.(png|jpg|jpeg|gif|svg|ico|webp)$/i)) {
             // 图片文件：直接查找或带哈希
             const ext = requestedFile.split('.').pop();
