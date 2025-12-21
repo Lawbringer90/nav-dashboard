@@ -408,10 +408,21 @@ async function createSite(request, env, corsHeaders) {
         return jsonResponse({ success: false, message: '站点名称和URL为必填项' }, 400, corsHeaders);
     }
 
+    // 如果没有提供 logo，使用 Google Favicon API 作为默认图标
+    let siteLogo = logo;
+    if (!siteLogo) {
+        try {
+            const domain = new URL(url).hostname;
+            siteLogo = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+        } catch (e) {
+            siteLogo = '';
+        }
+    }
+
     const result = await env.DB.prepare(`
     INSERT INTO sites (name, url, description, logo, category_id, sort_order) 
     VALUES (?, ?, ?, ?, ?, ?)
-  `).bind(name, url, description || '', logo || '', category_id || null, sort_order || 0).run();
+  `).bind(name, url, description || '', siteLogo, category_id || null, sort_order || 0).run();
 
     return jsonResponse({
         success: true,
@@ -428,11 +439,22 @@ async function updateSite(id, request, env, corsHeaders) {
         return jsonResponse({ success: false, message: '站点名称和URL为必填项' }, 400, corsHeaders);
     }
 
+    // 如果没有提供 logo，使用 Google Favicon API 作为默认图标
+    let siteLogo = logo;
+    if (!siteLogo) {
+        try {
+            const domain = new URL(url).hostname;
+            siteLogo = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+        } catch (e) {
+            siteLogo = '';
+        }
+    }
+
     const result = await env.DB.prepare(`
     UPDATE sites 
     SET name = ?, url = ?, description = ?, logo = ?, category_id = ?, sort_order = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).bind(name, url, description || '', logo || '', category_id || null, sort_order || 0, id).run();
+  `).bind(name, url, description || '', siteLogo, category_id || null, sort_order || 0, id).run();
 
     if (result.meta.changes === 0) {
         return jsonResponse({ success: false, message: '站点不存在' }, 404, corsHeaders);
