@@ -163,6 +163,11 @@ async function handleAPI(request, env, pathname, corsHeaders) {
         return await reorderSites(request, env, corsHeaders);
     }
 
+    // 恢复网络图标 API
+    if (pathname === '/api/sites/restore-remote-logos' && method === 'POST') {
+        return await restoreRemoteLogos(env, corsHeaders);
+    }
+
     if (pathname.match(/^\/api\/sites\/\d+$/)) {
         const id = pathname.split('/').pop();
         if (method === 'GET') return await getSite(id, env, corsHeaders);
@@ -471,6 +476,42 @@ async function deleteSite(id, env, corsHeaders) {
     }
 
     return jsonResponse({ success: true, message: '站点删除成功' }, 200, corsHeaders);
+}
+
+// 恢复网络图标（将所有站点图标恢复为 Google Favicon）
+async function restoreRemoteLogos(env, corsHeaders) {
+    try {
+        // 获取所有站点
+        const { results: sites } = await env.DB.prepare('SELECT id, url FROM sites').all();
+
+        let updated = 0;
+        let failed = 0;
+
+        for (const site of sites) {
+            try {
+                const domain = new URL(site.url).hostname;
+                const logo = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+
+                await env.DB.prepare('UPDATE sites SET logo = ? WHERE id = ?')
+                    .bind(logo, site.id)
+                    .run();
+                updated++;
+            } catch (e) {
+                console.error(`恢复图标失败 [ID: ${site.id}]:`, e.message);
+                failed++;
+            }
+        }
+
+        return jsonResponse({
+            success: true,
+            message: `图标恢复完成: 成功 ${updated} 个` + (failed > 0 ? `, 失败 ${failed} 个` : ''),
+            updated,
+            failed,
+            total: sites.length
+        }, 200, corsHeaders);
+    } catch (error) {
+        return jsonResponse({ success: false, message: '恢复失败: ' + error.message }, 500, corsHeaders);
+    }
 }
 
 // ==================== 分类操作 ====================
