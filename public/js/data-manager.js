@@ -137,10 +137,13 @@ async function handleImport(event) {
         if (result.success) {
             msgEl.textContent = result.message;
             msgEl.className = 'password-msg success';
-            setTimeout(() => location.reload(), 1500);
+            msgEl.style.display = 'block';  // 强制显示
+            alert('✅ ' + result.message);  // 弹窗确保用户看到
+            setTimeout(() => location.reload(), 500);
         } else {
             msgEl.textContent = result.message || '导入失败';
             msgEl.className = 'password-msg error';
+            msgEl.style.display = 'block';  // 强制显示
         }
     } catch (error) {
         msgEl.textContent = '文件解析失败: ' + error.message;
