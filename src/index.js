@@ -85,10 +85,14 @@ async function serveStatic(pathname, env) {
             }
         } else if (requestedFile.match(/\.(png|jpg|jpeg|gif|svg|ico|webp)$/i)) {
             // 图片文件：直接查找或带哈希
-            const ext = requestedFile.split('.').pop();
-            const baseName = requestedFile.replace(/\.[^.]+$/, '');
-            actualFile = files.find(f => f === requestedFile) ||
-                files.find(f => f.match(new RegExp(`^${baseName}\\.[a-f0-9]+\\.${ext}$`)));
+            actualFile = files.find(f => f === requestedFile);
+            if (!actualFile) {
+                const ext = requestedFile.split('.').pop();
+                const baseName = requestedFile.replace(/\.[^.]+$/, '');
+                // 转义文件名中的特殊正则字符（如 - . 等）
+                const escapedBaseName = baseName.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+                actualFile = files.find(f => f.match(new RegExp(`^${escapedBaseName}\\.[a-f0-9]+\\.${ext}$`)));
+            }
         } else {
             // 其他文件直接查找
             actualFile = files.find(f => f === requestedFile);
