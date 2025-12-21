@@ -1959,7 +1959,7 @@ body.edit-mode .edit-mode-hint {
 .loading-dots {
   display: flex;
   gap: 0.5rem;
-  opacity: 0.3;
+  opacity: 0;
   transition: opacity 0.3s ease;
 }
 
