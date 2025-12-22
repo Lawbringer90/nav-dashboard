@@ -1,0 +1,191 @@
+## 前言
+
+你是否厌倦了每次打开浏览器都要在收藏夹里翻找网站？今天给大家推荐一个开源的导航站项目 - Nav Dashboard，它采用现代化的磨砂玻璃设计风格，支持 Docker 自托管和 Cloudflare 无服务器两种部署方式。
+
+在线演示：[https://nav.csee.de5.net](https://nav.csee.de5.net)
+
+## 项目特性
+
+在开始部署之前，让我们先来看看这个项目有哪些亮点：
+
+**界面设计**
+
+- 磨砂玻璃效果 - 现代化的 Glassmorphism 设计风格
+- 暖色调配色 - 温暖舒适的视觉体验
+- 暗色模式 - 一键切换明暗主题
+- 响应式布局 - 完美适配各种设备
+
+**搜索功能**
+
+- 多引擎搜索 - 支持 Google、Bing、GitHub 一键切换
+- 实时搜索 - 快速筛选站点
+- 智能建议 - 搜索自动补全
+
+**管理功能**
+
+- 站点管理 - 完整的增删改查功能
+- 分类管理 - 多级分类组织导航
+- 拖拽排序 - 直观的排序操作
+- 灵活图标 - 支持远程 URL 和本地上传
+
+## Docker 部署（推荐）
+
+如果你有自己的服务器，使用 Docker 部署是最简单的方式。
+
+### 第一步：克隆项目
+
+在终端执行：
+
+```bash
+git clone https://github.com/debbide/nav-dashboard.git
+cd nav-dashboard/docker
+```
+
+### 第二步：使用 Docker Compose 启动
+
+```bash
+docker-compose up -d
+```
+
+就这么简单！服务启动后访问 `http://你的服务器IP:3000` 即可。
+
+**注意：** 默认管理密码是 `admin123`，首次登录后请及时修改！
+
+### 环境变量配置
+
+你可以通过修改环境变量来自定义一些设置：
+
+- `PORT`：服务端口，默认 3000
+- `ADMIN_PASSWORD`：初始管理密码，默认 admin123
+- `TZ`：时区设置，默认 UTC
+
+### 数据持久化
+
+项目默认会将数据保存在以下目录：
+
+- `./data` - SQLite 数据库
+- `./uploads` - 上传的图片
+
+**注意：** 请确保定期备份 data 和 uploads 目录！
+
+## Cloudflare 部署
+
+如果你没有服务器，或者想要更快的访问速度，可以选择部署到 Cloudflare 的无服务器平台。
+
+### 第一步：Fork 仓库
+
+首先，将项目 Fork 到你自己的 GitHub 账号下：
+
+```bash
+git clone https://github.com/debbide/nav-dashboard.git
+cd nav-dashboard
+```
+
+### 第二步：配置 GitHub Secrets
+
+进入你的 GitHub 仓库，访问：`Settings` → `Secrets and variables` → `Actions`
+
+添加以下 4 个 Secrets：
+
+- `CLOUDFLARE_API_TOKEN`：API 令牌，从 [Cloudflare 控制台](https://dash.cloudflare.com/profile/api-tokens) 创建
+- `CLOUDFLARE_ACCOUNT_ID`：账户 ID，在 [Dashboard](https://dash.cloudflare.com) 右侧
+- `D1_DATABASE_ID`：D1 数据库 ID，使用 wrangler 创建
+- `KV_NAMESPACE_ID`：KV 命名空间 ID，使用 wrangler 创建
+
+创建 D1 数据库和 KV 命名空间：
+
+```bash
+npm install -g wrangler
+wrangler login
+wrangler d1 create nav-dashboard-db
+wrangler kv:namespace create nav-images
+```
+
+### 第三步：初始化数据库
+
+**重要：** 此步骤只需在首次部署时执行一次！
+
+1. 进入 GitHub 仓库的 `Actions` 标签
+2. 选择 `Initialize Database`
+3. 点击 `Run workflow`
+4. `reset_data` 选择 `true` 可导入示例数据
+
+### 第四步：部署应用
+
+1. 选择 `Deploy to Cloudflare`
+2. 点击 `Run workflow`
+3. 等待部署完成
+
+部署完成后访问：`https://nav-dashboard.你的账户.workers.dev`
+
+## 使用指南
+
+### 进入管理后台
+
+访问 `/admin.html` 进入管理后台，输入密码（默认 `admin123`）登录。
+
+### 添加分类
+
+1. 在左侧菜单选择「分类管理」
+2. 点击「添加分类」
+3. 填写分类名称和图标
+4. 拖拽调整分类顺序
+
+### 添加站点
+
+1. 在左侧菜单选择「站点管理」
+2. 点击「添加站点」
+3. 填写站点信息：名称、URL、分类、图标
+4. 点击「一键获取图标」可自动获取网站 Logo
+
+### 使用拖拽排序
+
+在首页解锁后，可以直接拖拽站点卡片来调整顺序。
+
+## 进阶配置
+
+### 自定义背景
+
+在设置中可以更换背景图片，支持纯色背景、渐变背景和图片背景。
+
+### 数据备份与恢复
+
+Docker 版本备份：
+
+```bash
+cp -r data data_backup
+cp -r uploads uploads_backup
+```
+
+Cloudflare 版本备份：
+
+```bash
+npx wrangler d1 export nav-dashboard-db --output=backup.sql
+```
+
+## 常见问题
+
+**Q: 为什么图片无法上传？**
+
+A: Docker 版本确认 uploads 目录权限正确，Cloudflare 版本检查 KV 命名空间绑定。
+
+**Q: 忘记管理密码怎么办？**
+
+A: Docker 版本删除 `data/nav.db` 文件重新初始化，Cloudflare 版本重新运行 Initialize Database。
+
+**Q: 如何绑定自定义域名？**
+
+A: 在 Cloudflare Dashboard 中为 Workers 添加自定义域名即可。
+
+## 项目地址
+
+- GitHub：[https://github.com/debbide/nav-dashboard](https://github.com/debbide/nav-dashboard)
+- 在线演示：[https://nav.csee.de5.net](https://nav.csee.de5.net)
+
+如果觉得项目不错，欢迎给个 Star 支持一下！
+
+## 写在最后
+
+这个导航站项目采用了现代化的设计语言，部署简单，功能完善，非常适合个人或团队使用。无论你选择 Docker 自托管还是 Cloudflare 无服务器方案，都能快速搭建起一个美观实用的导航页面。
+
+如果在部署过程中遇到任何问题，欢迎在评论区留言讨论！

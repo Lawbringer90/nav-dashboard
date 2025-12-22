@@ -442,6 +442,14 @@ function setupSearch() {
                         `).join('')}
                     `;
                     suggestions.classList.add('active');
+
+                    // 为搜索建议项添加点击后清空搜索框的逻辑
+                    suggestions.querySelectorAll('.suggestion-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            searchInput.value = '';
+                            hideSuggestions();
+                        });
+                    });
                 } else {
                     suggestions.innerHTML = `<div class="suggestion-empty">无匹配站点，按 Enter 搜索</div>`;
                     suggestions.classList.add('active');

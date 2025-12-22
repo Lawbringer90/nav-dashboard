@@ -11,32 +11,67 @@
 📤 数据备份 一键导入导出
 🧩 浏览器插件 右键快速添加网站
 
+🐳 Docker 版本特性
+
+这次主要更新了 Docker 版本,新增了不少功能
+
+🔄 图标智能缓存
+自动将远程图标缓存到本地
+就算原站挂了图标也不会丢
+支持一键批量缓存所有图标
+
+📦 WebDAV 备份
+支持自动备份到 WebDAV 网盘
+坚果云 Alist 群晖都能用
+定时备份 设置好就不用管了
+
+🖼️ 图标多源获取
+Google Favicon
+DuckDuckGo Icons
+Favicon.im
+自动切换 总有一个能用
+
+🔐 安全加固
+密码 SHA256 哈希存储
+登录失败限制 防暴力破解
+15分钟锁定机制
+
+🧩 浏览器插件 新功能
+
+右键菜单添加 看到好网站一键收藏
+自动获取标题图标 不用手动填
+支持选择分类 直接归类
+CF 版 Docker 版都能用
+
 🌐 两种部署方式
 
 Cloudflare 版
 免费部署到 CF Pages
 全球 CDN 加速
-D1 数据库存储
 GitHub Actions 自动部署
 
 Docker 版
 一行命令部署
-数据本地存储
-适合有服务器的朋友
+数据完全本地
+功能更丰富
 
 docker run -d -p 3000:3000 ghcr.io/debbide/simple-nav-dashboard:latest
 
-🧩 浏览器插件
+或者用 docker-compose
 
-这个是今天新加的功能
-看到一个好网站 右键点一下就能添加到导航站
-不用再手动复制粘贴了
-
-📷 截图
-
-主页就是一个简洁的导航页面
-后台可以管理分类和站点
-插件弹窗自动获取网页标题和图标
+services:
+  nav-dashboard:
+    image: ghcr.io/debbide/simple-nav-dashboard:latest
+    container_name: nav-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - ADMIN_PASSWORD=admin123
+      - TZ=Asia/Shanghai
 
 🔗 项目地址
 

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探索 Nav Dashboard：打造你的高颜值个人导航站</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f9f9f9;
+        }
+
+        .article-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 2.2em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.6em;
+            color: #34495e;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: 1.3em;
+            color: #444;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 20px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: Consolas, Monaco, "Andale Mono", monospace;
+            color: #d63384;
+        }
+
+        pre {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        blockquote {
+            border-left: 4px solid #42b983;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #f8fdfa;
+            color: #555;
+        }
+
+        a {
+            color: #3eaf7c;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        a:hover {
+            border-bottom-color: #3eaf7c;
+        }
+
+        .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            text-align: center;
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="article-container">
+        <h1>🚀 探索 Nav Dashboard：打造你的高颜值个人导航站</h1>
+
+        <p>在这个数字化的时代，我们每天都要访问大量的网站和工具。浏览器书签虽然方便，但往往杂乱无章，难以管理。今天，我要向大家介绍一个开源项目 —— <strong>Nav
+                Dashboard</strong>，它能帮你轻松打造一个高颜值、现代化的个人导航站。</p>
+
+        <img src="screenshot.png" alt="Nav Dashboard 截图">
+
+        <h2>✨ 什么是 Nav Dashboard？</h2>
+
+        <p>Nav Dashboard 是一个基于卡片式布局的现代化导航站点生成器。它不仅仅是一个简单的链接列表，更是一个功能丰富、设计精美的个人仪表盘。</p>
+
+        <p>它最大的特点是采用了 <strong>磨砂玻璃（Glassmorphism）</strong>
+            设计风格，配合暖色调的配色，给人一种温暖舒适的视觉体验。无论是在宽大的桌面显示器上，还是在小巧的手机屏幕上，它都能完美适配，提供流畅的交互体验。</p>
+
+        <h2>🎨 核心特性</h2>
+
+        <h3>1. 极致的视觉体验</h3>
+        <ul>
+            <li><strong>磨砂玻璃质感</strong>：现代 UI 设计的潮流，半透明的背景模糊效果，让界面充满层次感。</li>
+            <li><strong>明暗模式切换</strong>：内置深色模式，支持自动跟随系统或手动切换，夜间浏览更护眼。</li>
+            <li><strong>响应式布局</strong>：精心调教的 CSS，确保在 PC、平板和手机上都有最佳显示效果。</li>
+        </ul>
+
+        <h3>2. 强大的实用功能</h3>
+        <ul>
+            <li><strong>多引擎搜索</strong>：集成了 Google、Bing、GitHub 等常用搜索引擎，支持一键切换，更有智能搜索建议功能。</li>
+            <li><strong>实时信息展示</strong>：首页卡片展示访客 IP、地理位置以及基于位置的实时天气信息。</li>
+            <li><strong>灵活的图标支持</strong>：添加站点时，你可以直接使用图片 URL，也可以上传本地图片，甚至通过内置 API 一键获取目标网站的 Logo。</li>
+        </ul>
+
+        <h3>3. 便捷的管理后台</h3>
+        <ul>
+            <li><strong>可视化管理</strong>：无需修改代码，通过带密码保护的管理后台即可轻松添加、编辑、删除站点和分类。</li>
+            <li><strong>拖拽排序</strong>：想要调整站点顺序？直接拖拽即可，所见即所得。</li>
+            <li><strong>数据备份</strong>：支持导出和导入数据，数据安全有保障。</li>
+        </ul>
+
+        <h2>🛠️ 技术栈与部署方案</h2>
+
+        <p>Nav Dashboard 提供了两种主流的部署方案，满足不同用户的需求：</p>
+
+        <h3>方案一：Cloudflare Serverless (推荐)</h3>
+
+        <p>如果你希望 <span class="highlight">零成本</span>、<span class="highlight">免运维</span>，那么 Cloudflare 版本是你的首选。</p>
+
+        <ul>
+            <li><strong>后端</strong>：Cloudflare Workers</li>
+            <li><strong>数据库</strong>：Cloudflare D1 (SQLite)</li>
+            <li><strong>存储</strong>：Cloudflare KV (用于图片存储)</li>
+            <li><strong>前端托管</strong>：Cloudflare Pages</li>
+        </ul>
+
+        <p><strong>部署优势</strong>：</p>
+        <ul>
+            <li>完全免费（在 Cloudflare 免费额度内）</li>
+            <li>全球 CDN 加速，访问速度极快</li>
+            <li>无需购买服务器</li>
+        </ul>
+
+        <h3>方案二：Docker 自托管</h3>
+
+        <p>如果你拥有自己的服务器（VPS 或 NAS），并且喜欢完全掌控数据，那么 Docker 版本非常适合你。</p>
+
+        <ul>
+            <li><strong>后端</strong>：Node.js + Express</li>
+            <li><strong>数据库</strong>：SQLite (本地文件)</li>
+            <li><strong>容器化</strong>：完整的 Docker 和 Docker Compose 支持</li>
+        </ul>
+
+        <p><strong>部署优势</strong>：</p>
+        <ul>
+            <li>数据完全掌握在自己手中</li>
+            <li>部署简单，一条命令即可启动</li>
+            <li>易于迁移和备份</li>
+        </ul>
+
+        <h2>🚀 如何开始？</h2>
+
+        <h3>Docker 快速启动</h3>
+
+        <p>如果你安装了 Docker，只需运行以下命令即可体验：</p>
+
+        <pre><code>docker run -d \
+--name nav-dashboard \
+-p 3000:3000 \
+-v $(pwd)/data:/app/data \
+-v $(pwd)/uploads:/app/uploads \
+-e ADMIN_PASSWORD=admin123 \
+debbide/nav-dashboard</code></pre>
+
+        <p>访问 <code>http://localhost:3000</code>，默认管理密码为 <code>admin123</code>。</p>
+
+        <h3>Cloudflare 部署</h3>
+
+        <ol>
+            <li>Fork 项目仓库：<a href="https://github.com/debbide/nav-dashboard" target="_blank">点击跳转 GitHub</a></li>
+            <li>在 GitHub 仓库设置中配置 Cloudflare API Token 等 Secrets。</li>
+            <li>通过 GitHub Actions 自动触发部署。</li>
+        </ol>
+
+        <p>详细的部署文档请参考项目中的 <code>README.md</code> 和 <code>docker/README.md</code>。</p>
+
+        <h2>📝 结语</h2>
+
+        <p>Nav Dashboard 是一个兼顾美观与实用的导航站解决方案。无论你是开发者、设计师，还是普通用户，它都能帮你整理繁杂的网络资源，提升效率。</p>
+
+        <p>如果你喜欢这个项目，欢迎在 GitHub 上点个 Star ⭐️ 支持一下！</p>
+
+        <div class="footer">
+            *本文基于 Nav Dashboard 项目编写，项目地址：<a href="https://github.com/debbide/nav-dashboard" target="_blank">GitHub</a>*
+        </div>
+    </div>
+
+</body>
+
+</html>

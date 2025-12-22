@@ -1,0 +1,137 @@
+简介
+
+Nav Dashboard 是一个基于卡片式布局的现代化个人导航站，采用磨砂玻璃（Glassmorphism）设计风格，帮助您整理和管理常用网站链接。它支持分类管理、多引擎搜索、拖拽排序、深色模式以及 WebDAV 数据备份，让您的网络资源井井有条。
+
+主要功能
+
+可视化导航：卡片式布局展示站点，支持自定义图标和描述。
+
+磨砂玻璃效果：现代化 UI 设计，界面精美有层次感。
+
+多引擎搜索：集成 Google、Bing、GitHub 搜索，支持一键切换和智能建议。
+
+分类管理：支持多级分类，可折叠侧边栏快速筛选。
+
+拖拽排序：长按拖拽即可调整站点和分类顺序，所见即所得。
+
+灵活图标支持：
+    支持远程图片 URL。
+    支持本地上传图片。
+    内置 Logo API 一键获取网站图标。
+
+深色模式：一键切换明暗主题，支持跟随系统。
+
+访客信息：展示 IP 地址、地理位置和实时天气。
+
+数据安全：
+    支持 WebDAV 自动/手动备份。
+    本地 JSON 文件存储，无需数据库。
+    支持导入导出数据。
+
+Docker 部署：一键部署，开箱即用。
+
+
+快速部署 (Docker)
+
+本项目推荐使用 Docker Compose 进行部署。
+
+1. 准备环境
+
+确保服务器已安装 Docker 和 Docker Compose。
+
+2. 创建配置文件
+
+创建目录 nav-dashboard，并在其中创建 docker-compose.yml 文件：
+
+version: '3.8'
+
+services:
+  nav-dashboard:
+    image: debbide/nav-dashboard:latest
+    container_name: nav-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - ADMIN_PASSWORD=admin123
+      - PORT=3000
+      - TZ=Asia/Shanghai
+
+3. 启动服务
+
+在目录下运行命令：
+
+docker-compose up -d
+
+启动后访问 http://服务器IP:3000 进入系统。
+
+
+使用指南
+
+1. 登录系统
+
+首次访问点击右上角齿轮图标，输入管理密码（默认 admin123）进入管理后台。
+
+2. 添加站点
+
+进入管理后台后：
+    点击"添加站点"按钮。
+    填写站点名称、URL、描述。
+    选择分类（可新建）。
+    设置图标：
+        方式一：直接粘贴图片 URL。
+        方式二：点击"上传图片"上传本地文件。
+        方式三：使用 Logo API 自动获取（输入域名后点击获取按钮）。
+
+3. 分类管理
+
+    在管理后台左侧可以添加、编辑、删除分类。
+    支持拖拽调整分类顺序。
+    分类支持自定义图标（emoji 或图片）。
+
+4. 拖拽排序
+
+    在首页输入密码解锁编辑模式。
+    长按站点卡片拖拽到目标位置。
+    松开后自动保存新顺序。
+
+5. 系统设置
+
+点击管理后台的"系统设置"：
+
+    基础设置：修改网站标题、背景图片。
+    密码管理：修改管理密码。
+    WebDAV 备份：
+        配置 WebDAV 服务器地址、用户名、密码。
+        开启定时自动备份。
+        支持手动备份和一键恢复。
+
+
+常见问题
+
+Q: 忘记管理密码怎么办？
+A: 修改 docker-compose.yml 中的 ADMIN_PASSWORD，然后运行 docker-compose up -d 重启。
+
+Q: 数据存储在哪里？
+A: 数据存储在挂载的 ./data 目录下，包括 categories.json、sites.json 和 settings.json。
+
+Q: 如何备份数据？
+A: 方式一：直接复制 ./data 目录。方式二：在系统设置中配置 WebDAV 自动备份。方式三：在管理后台使用"导出数据"功能下载 JSON 文件。
+
+Q: 图片上传后无法显示？
+A: 检查 ./uploads 目录是否正确挂载，确保容器有写入权限。
+
+Q: 如何更新到最新版本？
+A: 运行以下命令：
+docker-compose pull
+docker-compose up -d
+
+
+结语
+
+Nav Dashboard 致力于做一个简单好用的个人导航站。如果您觉得好用，欢迎在 GitHub 上点个 Star！
+
+GitHub 项目地址: https://github.com/debbide/nav-dashboard
